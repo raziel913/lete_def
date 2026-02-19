@@ -15,7 +15,6 @@ import 'package:wakelock_plus/wakelock_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 
-
 class Home extends StatefulWidget {
   @override
   MyHomeState createState() => MyHomeState();
@@ -29,39 +28,44 @@ class MyHomeState extends State<Home> with SingleTickerProviderStateMixin {
   bool dirState = false;
   String? selectedId;
   bool? presenzaLinea;
-    final FocusNode _focusNode = FocusNode();
+  final FocusNode _focusNode = FocusNode();
   String? messaggioLinea;
   TextEditingController _controller = TextEditingController();
-   String lastBarcode = ""; 
+  String lastBarcode = "";
+  String _barcodeBuffer = "";
   late StreamSubscription<List<ConnectivityResult>> _connectivitySubscription;
   List<ConnectivityResult>? connectivityRisultato;
-  RefreshController _refreshController =
-      RefreshController(initialRefresh: false);
+  RefreshController _refreshController = RefreshController(
+    initialRefresh: false,
+  );
 
-// FUNZIONI
+  // FUNZIONI
 
-// ONMOUNTED
+  // ONMOUNTED
   @override
   void initState() {
     super.initState();
-    
+
     chiudiCamera();
-      checkConnessione();
-       _connectivitySubscription = Connectivity()
-        .onConnectivityChanged
-        .listen((List<ConnectivityResult> result) {
+    checkConnessione();
+    _connectivitySubscription = Connectivity().onConnectivityChanged.listen((
+      List<ConnectivityResult> result,
+    ) {
       setState(() {
         if (result[0] == ConnectivityResult.none) {
           presenzaLinea = false;
           messaggioLinea = 'Connessione Assente';
-             MotionToast.warning(
-        title: Text("ATTENZIONE!",style: TextStyle(fontSize: 16,fontWeight: FontWeight.bold),),
-         width: 400, // Imposta una larghezza personalizzata
-         height: 150,
-        description: Text(messaggioLinea!,style: TextStyle(fontSize: 16),),
-        toastDuration: Duration(seconds: 10),
-        // position: MotionToastPosition.top,
-      ).show(context);
+          MotionToast.warning(
+            title: Text(
+              "ATTENZIONE!",
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            ),
+            width: 400, // Imposta una larghezza personalizzata
+            height: 150,
+            description: Text(messaggioLinea!, style: TextStyle(fontSize: 16)),
+            toastDuration: Duration(seconds: 10),
+            // position: MotionToastPosition.top,
+          ).show(context);
         } else {
           presenzaLinea = true;
           messaggioLinea = 'Connessione Attiva';
@@ -71,11 +75,11 @@ class MyHomeState extends State<Home> with SingleTickerProviderStateMixin {
     });
   }
 
- @override
+  @override
   void dispose() {
     // Annulla l'iscrizione al listener di connettività per prevenire perdite di memoria
     _connectivitySubscription.cancel();
-      _controller.dispose();
+    _controller.dispose();
     _focusNode.dispose();
     super.dispose();
   }
@@ -87,17 +91,18 @@ class MyHomeState extends State<Home> with SingleTickerProviderStateMixin {
       setState(() {
         presenzaLinea = false;
         messaggioLinea = 'Connessione Assente!';
-            MotionToast.warning(
-        title: Text("ATTENZIONE!",style: TextStyle(fontSize: 16,fontWeight: FontWeight.bold),),
-         width: 400, // Imposta una larghezza personalizzata
-         height: 150,
-        description: Text(messaggioLinea!,style: TextStyle(fontSize: 16),),
-        toastDuration: Duration(seconds: 5),
-        dismissable: true,
-      toastAlignment: Alignment.topCenter,  
-          
-      ).show(context);
-   
+        MotionToast.warning(
+          title: Text(
+            "ATTENZIONE!",
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+          ),
+          width: 400, // Imposta una larghezza personalizzata
+          height: 150,
+          description: Text(messaggioLinea!, style: TextStyle(fontSize: 16)),
+          toastDuration: Duration(seconds: 5),
+          dismissable: true,
+          toastAlignment: Alignment.topCenter,
+        ).show(context);
       });
     } else {
       setState(() {
@@ -105,11 +110,9 @@ class MyHomeState extends State<Home> with SingleTickerProviderStateMixin {
         messaggioLinea = 'Connessione Attiva';
       });
     }
- 
-
   }
 
-// REFRESH RELOAD
+  // REFRESH RELOAD
   void _onRefresh() async {
     chiudiCamera();
     checkConnessione();
@@ -125,7 +128,10 @@ class MyHomeState extends State<Home> with SingleTickerProviderStateMixin {
   }
 
   void showAlertVersion(
-      BuildContext context, String message, String versioneAgg) {
+    BuildContext context,
+    String message,
+    String versioneAgg,
+  ) {
     Alert(
       context: context,
       type: AlertType.error,
@@ -142,23 +148,22 @@ class MyHomeState extends State<Home> with SingleTickerProviderStateMixin {
       style: AlertStyle(
         isOverlayTapDismiss: false, // Disabilita la chiusura cliccando fuori
       ),
-      buttons: [
-      ],
+      buttons: [],
     ).show();
   }
 
   // AZIONETURNO
   Future<void> azioneQr() async {
     final SharedPreferences prefs = await SharedPreferences.getInstance();
-var qrLavorato=jsonDecode(qr!);
-    await prefs.setString('urlOdoo',qrLavorato['domain']);
+    var qrLavorato = jsonDecode(qr!);
+    await prefs.setString('urlOdoo', qrLavorato['domain']);
     // await chiudiCamera();
-        print('YAaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa');
+    print('YAaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa');
 
     // showAlert(context, "ssdfdsfsdds");
   }
 
-// SWEET ALERT
+  // SWEET ALERT
   void showAlert(BuildContext context, String message) {
     Alert(
       context: context,
@@ -181,12 +186,12 @@ var qrLavorato=jsonDecode(qr!);
             Navigator.pop(context);
           },
           width: 120,
-        )
+        ),
       ],
     ).show();
   }
 
-// LOADER
+  // LOADER
   Future<void> showLoadingDialog(BuildContext context) async {
     showDialog(
       context: context,
@@ -211,27 +216,25 @@ var qrLavorato=jsonDecode(qr!);
     azioneQr();
   }
 
-// NASCONDI LOADER
+  // NASCONDI LOADER
   void hideLoadingDialog(BuildContext context) {
     Navigator.of(context).pop();
   }
-void _processBarcode(String value) {
+
+    void _processBarcode(String value) {
     setState(() {
       lastBarcode = value;
+      _barcodeBuffer = "";
     });
-
     print("Barcode letto: $value");
-
-    // Pulisce l'input e mantiene il focus
-    _controller.clear();
-    FocusScope.of(context).requestFocus(_focusNode);
   }
+
   @override
   Widget build(BuildContext context) {
     final screenHeight = MediaQuery.of(context).size.height;
     final screenWidth = MediaQuery.of(context).size.width;
     final orientation = MediaQuery.of(context).orientation;
-  final appBarHeight = screenHeight * 0.28;
+    final appBarHeight = screenHeight * 0.28;
     return PopScope(
       canPop: false,
       child: Scaffold(
@@ -239,176 +242,172 @@ void _processBarcode(String value) {
           controller: _refreshController,
           header: WaterDropMaterialHeader(),
           onRefresh: _onRefresh,
-           child: SingleChildScrollView(
-              child: ConstrainedBox(
-                constraints: BoxConstraints(
-                  minHeight: screenHeight,
-                ), // Imposta l'altezza per garantire il corretto scroll
-                child: IntrinsicHeight(
-                  child: Stack(
-                    children: [
-       Positioned(
-                        top: 0,
-                        left: 0,
-                        right: 0,
-                        height: appBarHeight,
-                        child: PreferredSize(
-                          preferredSize: Size.fromHeight(appBarHeight),
-                          child: AppBar(
-                            centerTitle: true, 
-                             title: SizedBox(
-                height: 57,
-                child: Image(
-                  image: AssetImage('assets/images/logo_sgam.png'),
-                  fit: BoxFit
-                      .contain, // Per mantenere le proporzioni dell'immagine
-                ),
-              ),
-                            // automaticallyImplyLeading: false,
-                             backgroundColor: Theme.of(context).primaryColor.withAlpha(200), // 50% opaco
-                            elevation: 0,
-                            flexibleSpace: Container(
-                              padding:
-                                  EdgeInsets.only(left: 12.0, bottom: 20),
-                              alignment: Alignment.bottomLeft,
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                mainAxisAlignment: MainAxisAlignment.end,
-                                children: [
-                                  Text(
-                                    "Benvenuto!",
-                                    style: GoogleFonts.lato(
-                                      textStyle: TextStyle(
-                                        color: Colors.black,
-                                      ),
-                                      fontSize: 30,
-                                      fontWeight: FontWeight.bold,
-                                    ),
+          child: SingleChildScrollView(
+            child: ConstrainedBox(
+              constraints: BoxConstraints(
+                minHeight: screenHeight,
+              ), // Imposta l'altezza per garantire il corretto scroll
+              child: IntrinsicHeight(
+                child: Stack(
+                  children: [
+                    Positioned(
+                      top: 0,
+                      left: 0,
+                      right: 0,
+                      height: appBarHeight,
+                      child: PreferredSize(
+                        preferredSize: Size.fromHeight(appBarHeight),
+                        child: AppBar(
+                          centerTitle: true,
+                          title: SizedBox(
+                            height: 57,
+                            child: Image(
+                              image: AssetImage('assets/images/logo_sgam.png'),
+                              fit: BoxFit
+                                  .contain, // Per mantenere le proporzioni dell'immagine
+                            ),
+                          ),
+                          // automaticallyImplyLeading: false,
+                          backgroundColor: Theme.of(
+                            context,
+                          ).primaryColor.withAlpha(200), // 50% opaco
+                          elevation: 0,
+                          flexibleSpace: Container(
+                            padding: EdgeInsets.only(left: 12.0, bottom: 20),
+                            alignment: Alignment.bottomLeft,
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              mainAxisAlignment: MainAxisAlignment.end,
+                              children: [
+                                Text(
+                                  "Benvenuto!",
+                                  style: GoogleFonts.lato(
+                                    textStyle: TextStyle(color: Colors.black),
+                                    fontSize: 30,
+                                    fontWeight: FontWeight.bold,
                                   ),
-                                  Text(
-                                    // user!['descrizione'] ??
-                                        "Descrizione non disponibile",
-                                    style: GoogleFonts.lato(
-                                      textStyle: TextStyle(
-                                        color: Colors.black,
-                                      ),
-                                      fontSize: 20,
-                                      fontStyle: FontStyle.italic,
-                                    ),
+                                ),
+                                Text(
+                                  // user!['descrizione'] ??
+                                  "Descrizione non disponibile",
+                                  style: GoogleFonts.lato(
+                                    textStyle: TextStyle(color: Colors.black),
+                                    fontSize: 20,
+                                    fontStyle: FontStyle.italic,
                                   ),
-                                ],
-                              ),
+                                ),
+                              ],
                             ),
                           ),
                         ),
                       ),
-                          
-                Column(
-                                children: [
-                                  SizedBox(height: 50),
-                                  Row(
+                    ),
+
+                    Column(
+                      children: [
+                        SizedBox(height: 50),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceAround,
+                          children: [
+                            InkWell(
+                              onTap: () {
+                                print('asdasd');
+                              },
+                              child: Card(
+                                elevation: 20,
+                                child: Container(
+                                  width: screenWidth * 0.4,
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(12),
+                                    child: Column(
                                       mainAxisAlignment:
-                                          MainAxisAlignment.spaceAround,
+                                          MainAxisAlignment.start,
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.center,
                                       children: [
-                                        InkWell(
-                                          onTap: () {
-                                            print('asdasd');
-                                          },
-                                          child: Card(
-                                            elevation: 20,
-                                            child: Container(
-                                              width: screenWidth * 0.4,
-                                              child: Padding(
-                                                padding:
-                                                    const EdgeInsets.all(12),
-                                                child: Column(
-                                                  mainAxisAlignment:
-                                                      MainAxisAlignment.start,
-                                                  crossAxisAlignment:
-                                                      CrossAxisAlignment.center,
-                                                  children: [
-                                                    Icon(
-                                                      Icons.qr_code_2_rounded,
-                                                      color: const Color(
-                                                          0xFFBA0000),
-                                                      size: 100.0,
-                                                    ),
+                                        Icon(
+                                          Icons.qr_code_2_rounded,
+                                          color: const Color(0xFFBA0000),
+                                          size: 100.0,
+                                        ),
 
-                                                    SizedBox(height: 12),
-                                                    Text(
-                                                      "PRESENZA",
-                                                      style: GoogleFonts.lato(
-                                                        fontSize: 16,
-                                                        fontWeight:
-                                                            FontWeight.bold,
-                                                      ),
-                                                    ),
-
-                                                    // Aggiungi altri widget qui se necessario
-                                                  ],
-                                                ),
-                                              ),
-                                            ),
+                                        SizedBox(height: 12),
+                                        Text(
+                                          "PRESENZA",
+                                          style: GoogleFonts.lato(
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.bold,
                                           ),
                                         ),
-                                        
-                                        
-                                      ]
-                                      ),
-                                        SizedBox(height: 100),
-                                                               TextField(
-              controller: _controller,
-              autofocus: true,
-              readOnly: true,
-              decoration: InputDecoration(
-                labelText: "Scansiona barcode",
-                border: OutlineInputBorder(),
-              ),
-              onSubmitted: (value) {
-                if (value.trim().isEmpty) return;
 
-                _processBarcode(value);
-
-                _controller.clear(); // puliamo subito per il prossimo scan
-              },
-            ),
-  SizedBox(height: 20),
-            Text(
-              "Ultimo barcode: $lastBarcode", // qui il valore cambia dinamicamente
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-                                ],
-                                
+                                        // Aggiungi altri widget qui se necessario
+                                      ],
+                                    ),
+                                  ),
+                                ),
                               ),
-    
-                    ],
-                  ),
-              
-              
+                            ),
+                          ],
+                        ),
+                        SizedBox(height: 100),
+       KeyboardListener(
+  focusNode: _focusNode,
+  autofocus: true,
+  onKeyEvent: (KeyEvent event) {
+    if (event is KeyDownEvent) {
+      // Usa "character" se disponibile
+      final String? char = event.character;
+
+      if (char != null && char.isNotEmpty) {
+        if (char == '\n') {
+          _processBarcode(_barcodeBuffer);
+        } else {
+          _barcodeBuffer += char;
+        }
+      }
+    }
+  },
+  child: TextField(
+    controller: TextEditingController(text: _barcodeBuffer),
+    readOnly: true,
+    decoration: InputDecoration(
+      labelText: "Scansiona barcode",
+      border: OutlineInputBorder(),
+    ),
+  ),
+                        ),
+                        SizedBox(height: 20),
+                        Text(
+                          "Ultimo barcode: $lastBarcode", // qui il valore cambia dinamicamente
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
                 ),
               ),
-             
-         
+            ),
+          ),
 
+          // floatingActionButton: camState
+          //       ? FloatingActionButton(
+          //           child: const Text(
+          //             "Camera off",
+          //             textAlign: TextAlign.center,
+          //           ),
+          //           onPressed: () {
+          //             setState(() {
+          //               camState = false; // Disabilita la camera
+          //               qr = null;
+          //             });
+          //           },
+          //         )
+          //       : null
         ),
-        
-        // floatingActionButton: camState
-        //       ? FloatingActionButton(
-        //           child: const Text(
-        //             "Camera off",
-        //             textAlign: TextAlign.center,
-        //           ),
-        //           onPressed: () {
-        //             setState(() {
-        //               camState = false; // Disabilita la camera
-        //               qr = null;
-        //             });
-        //           },
-        //         )
-        //       : null
       ),
-      
-    ),
     );
   }
 }
