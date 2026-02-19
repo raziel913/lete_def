@@ -1,0 +1,26 @@
+include: package:lints/recommended.yaml
+
+
+linter:
+  # The lint rules applied to this project can be customized in the
+  # section below to disable rules from the `package:flutter_lints/flutter.yaml`
+  # included above or to enable additional rules. A list of all available lints
+  # and their documentation is published at https://dart.dev/lints.
+  #
+  # Instead of disabling a lint rule for the entire project in the
+  # section below, it can also be suppressed for a single line of code
+  # or a specific dart file by using the `// ignore: name_of_lint` and
+  # `// ignore_for_file: name_of_lint` syntax on the line or in the file
+  # producing the lint.
+  rules:
+    constant_identifier_names: false
+    use_key_in_widget_constructors: false # quando fai il build override non hai bisogno di aggiungere la key nel constructor
+    prefer_const_constructors: false # non hai bisogno di mettere const quando dichiari i vari Componenti (le leggende narrano  che che usando i const l'app rende meglio ma il tizio del corso dice che non è affato vero e che è una perdita di tempo e lui dice che il tempo è prezioso, quindi...)
+    avoid_print: false #se è impostato a true ti segnalava il print in quanto diceva che è preferibile non usarlo
+    prefer_interpolation_to_compose_strings: false # se concatenavi una stringa a una varibile e lo facevi usandp "+" te lo segnalava in quanto diceva che era preferibile usando il $ cioè l'interpolazione ma a noi ce ne sbatte perche flutter non deve fare vuommc' e come dice un mio collega "edda' macina' pure ù fierr flat"
+    camel_case_types : false
+    prefer_final_fields: false
+    
+
+# Additional information about this file can be found at
+# https://dart.dev/guides/language/analysis-options
