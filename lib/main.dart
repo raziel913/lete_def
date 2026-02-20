@@ -23,8 +23,8 @@ void main() async {
         appBarTheme: AppBarTheme(backgroundColor: Color.fromARGB(255, 187, 167, 167)),
         buttonTheme: ButtonThemeData(buttonColor:Color(0xFFFE5F00), disabledColor: const Color.fromARGB(255, 179, 26, 26), ),
         primaryColor: Color.fromARGB(255, 226, 33, 31),
-        colorScheme: ColorScheme.fromSeed(seedColor: Color.fromARGB(255, 35, 35, 92),
-        primary: Color(0xFFFE5F00),
+        colorScheme: ColorScheme.fromSeed(seedColor: Color.fromARGB(255, 255, 255, 255),
+        primary: Color(0xFF243364),
         secondary: Color.fromARGB(255, 219, 203, 203),
         ),
 

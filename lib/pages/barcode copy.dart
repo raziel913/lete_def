@@ -10,7 +10,6 @@ import 'package:intl/intl.dart';
 import 'package:refresh/refresh.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:lete_sgam/global.dart';
-import 'package:lete_sgam/pages/barcode.dart';
 import 'package:flutter/services.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -222,12 +221,20 @@ class MyHomeState extends State<Home> with SingleTickerProviderStateMixin {
     Navigator.of(context).pop();
   }
 
+    void _processBarcode(String value) {
+    setState(() {
+      lastBarcode = value;
+      _barcodeBuffer = "";
+    });
+    print("Barcode letto: $value");
+  }
+
   @override
   Widget build(BuildContext context) {
     final screenHeight = MediaQuery.of(context).size.height;
     final screenWidth = MediaQuery.of(context).size.width;
     final orientation = MediaQuery.of(context).orientation;
-    final appBarHeight = screenHeight * 0.3;
+    final appBarHeight = screenHeight * 0.28;
     return PopScope(
       canPop: false,
       child: Scaffold(
@@ -263,7 +270,7 @@ class MyHomeState extends State<Home> with SingleTickerProviderStateMixin {
                           // automaticallyImplyLeading: false,
                           backgroundColor: Theme.of(
                             context,
-                          ).primaryColor.withAlpha(180), // 50% opaco
+                          ).primaryColor.withAlpha(200), // 50% opaco
                           elevation: 0,
                           flexibleSpace: Container(
                             padding: EdgeInsets.only(left: 12.0, bottom: 20),
@@ -275,14 +282,7 @@ class MyHomeState extends State<Home> with SingleTickerProviderStateMixin {
                                 Text(
                                   "Benvenuto!",
                                   style: GoogleFonts.lato(
-                                    textStyle: TextStyle(
-                                      color: const Color.fromARGB(
-                                        255,
-                                        255,
-                                        255,
-                                        255,
-                                      ),
-                                    ),
+                                    textStyle: TextStyle(color: Colors.black),
                                     fontSize: 30,
                                     fontWeight: FontWeight.bold,
                                   ),
@@ -291,14 +291,7 @@ class MyHomeState extends State<Home> with SingleTickerProviderStateMixin {
                                   // user!['descrizione'] ??
                                   "Descrizione non disponibile",
                                   style: GoogleFonts.lato(
-                                    textStyle: TextStyle(
-                                      color: const Color.fromARGB(
-                                        255,
-                                        255,
-                                        255,
-                                        255,
-                                      ),
-                                    ),
+                                    textStyle: TextStyle(color: Colors.black),
                                     fontSize: 20,
                                     fontStyle: FontStyle.italic,
                                   ),
@@ -310,138 +303,88 @@ class MyHomeState extends State<Home> with SingleTickerProviderStateMixin {
                       ),
                     ),
 
-                    Padding(
-                      padding: const EdgeInsets.all(8.0),
-
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          SizedBox(height: 100),
-                          SizedBox(
-                            child: Image.asset(
-                              'assets/images/logo_sgam.png',
-                              fit: BoxFit.contain,
-                              width: 180,
-                            ),
-                          ),
-                          Padding(
-                            padding: EdgeInsets.only(top: 20, bottom: 20),
-                            child: Divider(
-                              color: Theme.of(
-                                context,
-                              ).primaryColor, // Colore della linea
-                              thickness: 2, // Spessore della linea
-                              height:
-                                  15, // Altezza complessiva del Divider (incluso padding verticale)
-                            ),
-                          ),
-                          Column(
-                            children: [
-                              // SizedBox(height: 50),
-                              Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceAround,
-                                children: [
-                                  InkWell(
-                                    onTap: () {
-                                      Navigator.push(
-                                        context,
-                                        MaterialPageRoute(
-                                          builder: (context) => Barcode(),
+                    Column(
+                      children: [
+                        SizedBox(height: 50),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceAround,
+                          children: [
+                            InkWell(
+                              onTap: () {
+                                print('asdasd');
+                              },
+                              child: Card(
+                                elevation: 20,
+                                child: Container(
+                                  width: screenWidth * 0.4,
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(12),
+                                    child: Column(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.start,
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.center,
+                                      children: [
+                                        Icon(
+                                          Icons.qr_code_2_rounded,
+                                          color: const Color(0xFFBA0000),
+                                          size: 100.0,
                                         ),
-                                      );
-                                    },
-                                    child: Card(
-                                      elevation: 20,
-                                      child: Container(
-                                        width: screenWidth * 0.4,
-                                        child: Padding(
-                                          padding: const EdgeInsets.all(12),
-                                          child: Column(
-                                            mainAxisAlignment:
-                                                MainAxisAlignment.start,
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.center,
-                                            children: [
-                                              Icon(
-                                                Icons.barcode_reader,
-                                                color: Theme.of(
-                                                  context,
-                                                ).colorScheme.primary,
-                                                size: 100.0,
-                                              ),
-                                              SizedBox(height: 12),
-                                              Text(
-                                                "BARCODE",
-                                                style: GoogleFonts.lato(
-                                                  fontSize: 16,
-                                                  fontWeight: FontWeight.bold,
-                                                ),
-                                              ),
-                                            ],
+
+                                        SizedBox(height: 12),
+                                        Text(
+                                          "PRESENZA",
+                                          style: GoogleFonts.lato(
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.bold,
                                           ),
                                         ),
-                                      ),
+
+                                        // Aggiungi altri widget qui se necessario
+                                      ],
                                     ),
-                                  ),
-                                  InkWell(
-                                    onTap: () {
-                                      print('sadsa');
-                                    },
-                                    child: Card(
-                                      elevation: 6,
-                                      child: Container(
-                                        width: screenWidth * 0.4,
-                                        child: Padding(
-                                          padding: const EdgeInsets.all(12),
-                                          child: Column(
-                                            mainAxisAlignment:
-                                                MainAxisAlignment.start,
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.center,
-                                            children: [
-                                              Icon(
-                                                Icons.camera_alt_rounded,
-                                                color: Theme.of(
-                                                  context,
-                                                ).colorScheme.primary,
-                                                size: 100.0,
-                                              ),
-
-                                              SizedBox(height: 12),
-                                              Text(
-                                                "CAMERA",
-                                                style: GoogleFonts.lato(
-                                                  fontSize: 16,
-                                                  fontWeight: FontWeight.bold,
-                                                ),
-                                              ),
-
-                                              // Aggiungi altri widget qui se necessario
-                                            ],
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-
-                              // Spacer(),
-                              Padding(
-                                padding: const EdgeInsets.only(top: 20),
-                                child: Text(
-                                  'Versione:${Globals.version}',
-                                  style: TextStyle(
-                                    color: const Color.fromARGB(255, 34, 6, 6),
-                                    fontSize: 14,
                                   ),
                                 ),
                               ),
-                            ],
+                            ),
+                          ],
+                        ),
+                        SizedBox(height: 100),
+       KeyboardListener(
+  focusNode: _focusNode,
+  autofocus: true,
+  onKeyEvent: (KeyEvent event) {
+    if (event is KeyDownEvent) {
+      // Usa "character" se disponibile
+      final String? char = event.character;
+
+      if (char != null && char.isNotEmpty) {
+        if (char == '\n') {
+          _processBarcode(_barcodeBuffer);
+        } else {
+          _barcodeBuffer += char;
+        }
+      }
+    }
+  },
+  child: TextField(
+    controller: TextEditingController(text: _barcodeBuffer),
+    readOnly: true,
+    decoration: InputDecoration(
+      labelText: "Scansiona barcode",
+      border: OutlineInputBorder(),
+    ),
+  ),
+                        ),
+                        SizedBox(height: 20),
+                        Text(
+                          "Ultimo barcode: $lastBarcode", // qui il valore cambia dinamicamente
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
                           ),
-                        ],
-                      ),
+                        ),
+                      ],
                     ),
                   ],
                 ),
