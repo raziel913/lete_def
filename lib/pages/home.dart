@@ -11,6 +11,7 @@ import 'package:refresh/refresh.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:lete_sgam/global.dart';
 import 'package:lete_sgam/pages/barcode.dart';
+import 'package:lete_sgam/pages/camera.dart';
 import 'package:flutter/services.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -347,7 +348,7 @@ class MyHomeState extends State<Home> with SingleTickerProviderStateMixin {
                                       Navigator.push(
                                         context,
                                         MaterialPageRoute(
-                                          builder: (context) => Barcode(),
+                                          builder: (context) => Barcodex(),
                                         ),
                                       );
                                     },
@@ -386,7 +387,12 @@ class MyHomeState extends State<Home> with SingleTickerProviderStateMixin {
                                   ),
                                   InkWell(
                                     onTap: () {
-                                      print('sadsa');
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (context) => B2(),
+                                        ),
+                                      );
                                     },
                                     child: Card(
                                       elevation: 6,
