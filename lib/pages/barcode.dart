@@ -17,6 +17,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:audioplayers/audioplayers.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 
 class Barcodex extends StatefulWidget {
   @override
@@ -29,6 +30,9 @@ class MyHomeState extends State<Barcodex> with SingleTickerProviderStateMixin {
   bool isCameraOn = false;
   bool errore = false;
   bool dirState = false;
+  bool completata = false;
+  bool associazione = false;
+  bool validazione = false;
   bool _isLoading = false;
   bool _isDialogOpen = false;
   String? selectedId;
@@ -184,6 +188,25 @@ class MyHomeState extends State<Barcodex> with SingleTickerProviderStateMixin {
       var responseData = jsonDecode(response.body);
       hideLoadingDialog(context);
       if (responseData['successo'] == true) {
+        if (responseData['consegna']['statoWms'] == 'Completata') {
+          setState(() {
+            completata = true;
+            associazione = false;
+            validazione = false;
+          });
+        } else if (responseData['consegna']['statoWms'] == 'Scansione') {
+          setState(() {
+            completata = false;
+            associazione = true;
+            validazione = false;
+          });
+        } else if (responseData['consegna']['statoWms'] == 'PackingList') {
+          setState(() {
+            completata = false;
+            associazione = false;
+            validazione = true;
+          });
+        }
         _eltabella1 = List<Map<String, dynamic>>.from(
           responseData['consegna']['prodotti'],
         );
@@ -265,9 +288,16 @@ class MyHomeState extends State<Barcodex> with SingleTickerProviderStateMixin {
       var responseData = jsonDecode(response.body);
       hideLoadingDialog(context);
       if (responseData['successo'] == true) {
-        // prodottiDaScansionare
-        final prodottiDaScansionare =
-            responseData['prodottiDaScansionare'];
+        if (responseData['prodottiDaScansionare'] != null &&
+            responseData['prodottiDaScansionare'] is List &&
+            (responseData['prodottiDaScansionare'] as List).isEmpty) {
+          setState(() {
+            barcodeSscc = null;
+          });
+     showLoadingDialog2(context);
+          return;
+        }
+        final prodottiDaScansionare = responseData['prodottiDaScansionare'];
 
         if (prodottiDaScansionare != null &&
             prodottiDaScansionare is List &&
@@ -278,8 +308,81 @@ class MyHomeState extends State<Barcodex> with SingleTickerProviderStateMixin {
         }
 
         // prodottiDaControllare
-        final prodottiDaControllare =
-            responseData['prodottiDaControllare'];
+        final prodottiDaControllare = responseData['prodottiDaControllare'];
+
+        if (prodottiDaControllare != null &&
+            prodottiDaControllare is List &&
+            prodottiDaControllare.isNotEmpty) {
+          _eltabella3 = List<Map<String, dynamic>>.from(prodottiDaControllare);
+        } else {
+          _eltabella3 = []; // 👈 array vuoto
+        }
+      } else {
+        await player.play(AssetSource('sounds/error.mp3'));
+        mt.MotionToast.warning(
+          title: Text(
+            "ATTENZIONE!",
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+          ),
+          description: Text(
+            responseData['errore'],
+            style: TextStyle(fontSize: 16),
+          ),
+          width: 250,
+          height: 100,
+          toastDuration: Duration(seconds: 5),
+          animationType: mt.AnimationType.slideInFromLeft, // ← usa il prefisso
+        ).show(context);
+      }
+      setState(() {
+        _isLoading = false;
+      });
+      // showAlert(context, "ssdfdsfsdds");
+    }
+  }
+
+   // AZIONEVALIDA
+  Future<void> azioneValida() async {
+    setState(() {
+      _isLoading = true;
+    });
+
+    var payload = jsonEncode({
+      "nomeConsegna": lastBarcode,
+      "sscc": barcodeSscc,
+    });
+    var url = Uri.parse("${Globals.globalAPI}/api/sscc/consegna/controlla");
+    print(url);
+    var response = await http.post(
+      url,
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': "Bearer ${Globals.globalToken}",
+      },
+      body: payload,
+    );
+    print(response.statusCode);
+    if (response.statusCode == 401) {
+      await player.play(AssetSource('sounds/error.mp3'));
+      showAlert(context, 'Errore Generale!');
+      hideLoadingDialog(context);
+    } else {
+      await player.play(AssetSource('sounds/ok.mp3'));
+      var responseData = jsonDecode(response.body);
+      hideLoadingDialog(context);
+      if (responseData['successo'] == true) {
+        if (responseData['prodottiDaControllare'] != null &&
+            responseData['prodottiDaControllare'] is List &&
+            (responseData['prodottiDaControllare'] as List).isEmpty) {
+          setState(() {
+            barcodeSscc = null;
+          });
+     showLoadingDialog2(context);
+          return;
+        }
+       
+        // prodottiDaControllare
+        final prodottiDaControllare = responseData['prodottiDaControllare'];
 
         if (prodottiDaControllare != null &&
             prodottiDaControllare is List &&
@@ -387,10 +490,38 @@ class MyHomeState extends State<Barcodex> with SingleTickerProviderStateMixin {
     if (parametro.startsWith("WH")) {
       await azioneConsegna();
     } else {
+      if(associazione){
       await azioneAssocia();
+      }else if(validazione){
+          await azioneValida();
+      }
     }
 
     //  hideLoadingDialog(context);
+  }
+
+   // LOADER 2
+  Future<void> showLoadingDialog2(BuildContext context) async {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return Dialog(
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                CircularProgressIndicator(),
+                SizedBox(width: 16),
+                Text("Caricamento..."),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+      await azioneConsegna();
   }
 
   // NASCONDI LOADER
@@ -403,6 +534,7 @@ class MyHomeState extends State<Barcodex> with SingleTickerProviderStateMixin {
     setState(() {
       if (value.startsWith("WH")) {
         lastBarcode = value;
+        barcodeSscc = null;
       } else {
         barcodeSscc = value;
       }
@@ -443,6 +575,8 @@ class MyHomeState extends State<Barcodex> with SingleTickerProviderStateMixin {
     setState(() {});
   }
 
+
+
   @override
   void dispose() {
     // Annulla l'iscrizione al listener di connettività per prevenire perdite di memoria
@@ -464,18 +598,63 @@ class MyHomeState extends State<Barcodex> with SingleTickerProviderStateMixin {
       canPop: false,
       child: Scaffold(
         appBar: PreferredSize(
-          preferredSize: Size.fromHeight(65),
+          preferredSize: Size.fromHeight(60),
           child: AppBar(
             centerTitle: true,
             title: SizedBox(
               height: 50,
-              child: Image(
-                image: AssetImage('assets/images/logo_sgam.png'),
-                fit: BoxFit
-                    .contain, // Per mantenere le proporzioni dell'immagine
-              ),
+              child: completata
+                  ? Text(
+                          "COMPLETATO", // se null mostra stringa vuota
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        )
+                        .animate(
+                          onPlay: (controller) =>
+                              controller.repeat(reverse: true),
+                        )
+                        .tint(duration: 1200.ms, color: Colors.white)
+                  : associazione
+                  ? Text(
+                          "IN ASSOCIAZIONE", // se null mostra stringa vuota
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        )
+                        .animate(
+                          onPlay: (controller) =>
+                              controller.repeat(reverse: true),
+                        )
+                        .tint(duration: 1200.ms, color: Colors.white)
+                  : validazione
+                  ? Text(
+                          "IN VALIDAZIONE", // se null mostra stringa vuota
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        )
+                        .animate(
+                          onPlay: (controller) =>
+                              controller.repeat(reverse: true),
+                        )
+                        .tint(duration: 1200.ms, color: Colors.white)
+                  : Image(
+                      image: AssetImage('assets/images/logo_sgam.png'),
+                      fit: BoxFit
+                          .contain, // Per mantenere le proporzioni dell'immagine
+                    ),
             ),
-            backgroundColor: Theme.of(context).primaryColor.withAlpha(180),
+            backgroundColor: completata
+                ? Colors.green
+                : associazione
+                ? Colors.yellow
+                : validazione
+                ? Color(0xFF243364)
+                : Theme.of(context).primaryColor.withAlpha(180),
           ),
         ),
         body: Container(
@@ -512,7 +691,8 @@ class MyHomeState extends State<Barcodex> with SingleTickerProviderStateMixin {
                               child: Row(
                                 children: [
                                   Column(
-                                     crossAxisAlignment: CrossAxisAlignment.start,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
                                     children: [
                                       Text(
                                         "N°Ordine: ${lastBarcode ?? ''}", // se null mostra stringa vuota
@@ -805,7 +985,8 @@ class MyHomeState extends State<Barcodex> with SingleTickerProviderStateMixin {
           ),
         ),
         floatingActionButton: FloatingActionButton(
-          child: const Text("Camera off", textAlign: TextAlign.center),
+          child: Icon(Icons.camera_enhance),
+          backgroundColor: Color(0xFF243364), // 
           onPressed: () {
             setState(() {
               _toggleScanner();

@@ -1,20 +1,14 @@
 import 'dart:async';
 import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
 import 'package:rflutter_alert/rflutter_alert.dart';
 import 'package:motion_toast/motion_toast.dart';
-import 'package:intl/date_symbol_data_local.dart';
-import 'package:intl/intl.dart';
 import 'package:refresh/refresh.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:lete_sgam/global.dart';
 import 'package:lete_sgam/pages/barcode.dart';
 import 'package:lete_sgam/pages/camera.dart';
 import 'package:flutter/services.dart';
-import 'package:wakelock_plus/wakelock_plus.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 
 class Home extends StatefulWidget {
@@ -34,7 +28,6 @@ class MyHomeState extends State<Home> with SingleTickerProviderStateMixin {
   String? messaggioLinea;
   TextEditingController _controller = TextEditingController();
   String lastBarcode = "";
-  String _barcodeBuffer = "";
   late StreamSubscription<List<ConnectivityResult>> _connectivitySubscription;
   List<ConnectivityResult>? connectivityRisultato;
   RefreshController _refreshController = RefreshController(
@@ -232,6 +225,7 @@ class MyHomeState extends State<Home> with SingleTickerProviderStateMixin {
                       child: PreferredSize(
                         preferredSize: Size.fromHeight(appBarHeight),
                         child: AppBar(
+                           automaticallyImplyLeading: false,
                           centerTitle: true,
                           title: SizedBox(
                             height: 57,
@@ -434,21 +428,6 @@ class MyHomeState extends State<Home> with SingleTickerProviderStateMixin {
               ),
             ),
           ),
-
-          // floatingActionButton: camState
-          //       ? FloatingActionButton(
-          //           child: const Text(
-          //             "Camera off",
-          //             textAlign: TextAlign.center,
-          //           ),
-          //           onPressed: () {
-          //             setState(() {
-          //               camState = false; // Disabilita la camera
-          //               qr = null;
-          //             });
-          //           },
-          //         )
-          //       : null
         ),
       ),
     );
