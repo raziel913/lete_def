@@ -155,9 +155,9 @@ class MyHomeState extends State<Barcodex> with SingleTickerProviderStateMixin {
       closeFunction: () {
         _isDialogOpen = false;
       },
-      style: AlertStyle(
-        isOverlayTapDismiss: false, // Disabilita la chiusura cliccando fuori
-      ),
+      // style: AlertStyle(
+      //   isOverlayTapDismiss: false, // Disabilita la chiusura cliccando fuori
+      // ),
       buttons: [],
     ).show();
   }
@@ -294,7 +294,7 @@ class MyHomeState extends State<Barcodex> with SingleTickerProviderStateMixin {
           setState(() {
             barcodeSscc = null;
           });
-     showLoadingDialog2(context);
+          showLoadingDialog2(context);
           return;
         }
         final prodottiDaScansionare = responseData['prodottiDaScansionare'];
@@ -341,7 +341,7 @@ class MyHomeState extends State<Barcodex> with SingleTickerProviderStateMixin {
     }
   }
 
-   // AZIONEVALIDA
+  // AZIONEVALIDA
   Future<void> azioneValida() async {
     setState(() {
       _isLoading = true;
@@ -377,10 +377,10 @@ class MyHomeState extends State<Barcodex> with SingleTickerProviderStateMixin {
           setState(() {
             barcodeSscc = null;
           });
-     showLoadingDialog2(context);
+          showLoadingDialog2(context);
           return;
         }
-       
+
         // prodottiDaControllare
         final prodottiDaControllare = responseData['prodottiDaControllare'];
 
@@ -490,17 +490,17 @@ class MyHomeState extends State<Barcodex> with SingleTickerProviderStateMixin {
     if (parametro.startsWith("WH")) {
       await azioneConsegna();
     } else {
-      if(associazione){
-      await azioneAssocia();
-      }else if(validazione){
-          await azioneValida();
+      if (associazione) {
+        await azioneAssocia();
+      } else if (validazione) {
+        await azioneValida();
       }
     }
 
     //  hideLoadingDialog(context);
   }
 
-   // LOADER 2
+  // LOADER 2
   Future<void> showLoadingDialog2(BuildContext context) async {
     showDialog(
       context: context,
@@ -521,7 +521,7 @@ class MyHomeState extends State<Barcodex> with SingleTickerProviderStateMixin {
         );
       },
     );
-      await azioneConsegna();
+    await azioneConsegna();
   }
 
   // NASCONDI LOADER
@@ -574,8 +574,6 @@ class MyHomeState extends State<Barcodex> with SingleTickerProviderStateMixin {
     }
     setState(() {});
   }
-
-
 
   @override
   void dispose() {
@@ -715,6 +713,10 @@ class MyHomeState extends State<Barcodex> with SingleTickerProviderStateMixin {
                               ),
                             ),
                             SizedBox(height: 10),
+                              Text(
+                                'Panoramica',
+                                style: TextStyle(fontStyle: FontStyle.italic,fontSize: 16),
+                              ),
                             SingleChildScrollView(
                               physics: BouncingScrollPhysics(),
                               scrollDirection: Axis.horizontal,
@@ -724,7 +726,7 @@ class MyHomeState extends State<Barcodex> with SingleTickerProviderStateMixin {
                                   headingRowColor: WidgetStateProperty.all(
                                     Color.fromARGB(255, 233, 230, 221),
                                   ),
-                                  dataRowMaxHeight: 70,
+                                  dataRowMaxHeight: 60,
                                   columnSpacing: 30,
                                   columns: const <DataColumn>[
                                     DataColumn(
@@ -759,7 +761,7 @@ class MyHomeState extends State<Barcodex> with SingleTickerProviderStateMixin {
                                       cells: <DataCell>[
                                         DataCell(Text(item['nome'].toString())),
                                         DataCell(
-                                          Text(item['quantita'].toString()),
+                                          Center(child: Text(item['quantita'].toString())),
                                         ),
                                         DataCell(
                                           Text(item['unitaMisura'].toString()),
@@ -781,6 +783,10 @@ class MyHomeState extends State<Barcodex> with SingleTickerProviderStateMixin {
                                   height: 15,
                                 ),
                               ),
+                              Text(
+                                'Da Associare',
+                                style: TextStyle(fontStyle: FontStyle.italic, fontSize: 16),
+                              ),
                               SingleChildScrollView(
                                 physics: BouncingScrollPhysics(),
                                 scrollDirection: Axis.horizontal,
@@ -790,7 +796,7 @@ class MyHomeState extends State<Barcodex> with SingleTickerProviderStateMixin {
                                     headingRowColor: WidgetStateProperty.all(
                                       Color.fromARGB(255, 233, 230, 221),
                                     ),
-                                    dataRowMaxHeight: 70,
+                                    dataRowMaxHeight: 60,
                                     columnSpacing: 30,
                                     columns: const <DataColumn>[
                                       DataColumn(
@@ -811,7 +817,7 @@ class MyHomeState extends State<Barcodex> with SingleTickerProviderStateMixin {
                                       ),
                                       DataColumn(
                                         label: Text(
-                                          'Scans.',
+                                          'Scan.',
                                           style: TextStyle(
                                             fontWeight: FontWeight.bold,
                                           ),
@@ -833,21 +839,27 @@ class MyHomeState extends State<Barcodex> with SingleTickerProviderStateMixin {
                                             Text(item['prodotto'].toString()),
                                           ),
                                           DataCell(
-                                            Text(
-                                              item['quantitaRichiesta']
-                                                  .toString(),
+                                            Center(
+                                              child: Text(
+                                                item['quantitaRichiesta']
+                                                    .toString(),
+                                              ),
                                             ),
                                           ),
                                           DataCell(
-                                            Text(
-                                              item['quantitaScansionata']
-                                                  .toString(),
+                                            Center(
+                                              child: Text(
+                                                item['quantitaScansionata']
+                                                    .toString(),
+                                              ),
                                             ),
                                           ),
                                           DataCell(
-                                            Text(
-                                              item['quantitaResidua']
-                                                  .toString(),
+                                            Center(
+                                              child: Text(
+                                                item['quantitaResidua']
+                                                    .toString(),
+                                              ),
                                             ),
                                           ),
                                         ],
@@ -858,8 +870,8 @@ class MyHomeState extends State<Barcodex> with SingleTickerProviderStateMixin {
                               ),
                             ],
 
-                            // TRZA TAB
-                            if (_eltabella3 != null &&
+                            if (validazione &&
+                                _eltabella3 != null &&
                                 _eltabella3.isNotEmpty) ...[
                               Padding(
                                 padding: EdgeInsets.only(top: 10, bottom: 10),
@@ -868,6 +880,10 @@ class MyHomeState extends State<Barcodex> with SingleTickerProviderStateMixin {
                                   thickness: 2,
                                   height: 15,
                                 ),
+                              ),
+                              Text(
+                                'Da Validare',
+                                style: TextStyle(fontStyle: FontStyle.italic,fontSize: 16),
                               ),
                               SingleChildScrollView(
                                 physics: BouncingScrollPhysics(),
@@ -878,7 +894,7 @@ class MyHomeState extends State<Barcodex> with SingleTickerProviderStateMixin {
                                     headingRowColor: WidgetStateProperty.all(
                                       Color.fromARGB(255, 233, 230, 221),
                                     ),
-                                    dataRowMaxHeight: 70,
+                                    dataRowMaxHeight: 60,
                                     columnSpacing: 30,
                                     columns: const <DataColumn>[
                                       DataColumn(
@@ -890,10 +906,12 @@ class MyHomeState extends State<Barcodex> with SingleTickerProviderStateMixin {
                                         ),
                                       ),
                                       DataColumn(
-                                        label: Text(
-                                          'Da Controllare',
-                                          style: TextStyle(
-                                            fontWeight: FontWeight.bold,
+                                        label: Center(
+                                          child: Text(
+                                            'Da Controllare',
+                                            style: TextStyle(
+                                              fontWeight: FontWeight.bold,
+                                            ),
                                           ),
                                         ),
                                       ),
@@ -986,7 +1004,7 @@ class MyHomeState extends State<Barcodex> with SingleTickerProviderStateMixin {
         ),
         floatingActionButton: FloatingActionButton(
           child: Icon(Icons.camera_enhance),
-          backgroundColor: Color(0xFF243364), // 
+          backgroundColor: Color(0xFF243364), //
           onPressed: () {
             setState(() {
               _toggleScanner();

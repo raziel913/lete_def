@@ -390,7 +390,7 @@ class MyHomeState extends State<Home> with SingleTickerProviderStateMixin {
 
                                               SizedBox(height: 12),
                                               Text(
-                                                "CAMERA",
+                                                "CAMERA(beta)",
                                                 style: GoogleFonts.lato(
                                                   fontSize: 16,
                                                   fontWeight: FontWeight.bold,

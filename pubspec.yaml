@@ -30,6 +30,7 @@ dependencies:
   mobile_scanner: ^7.2.0
   audioplayers: ^6.5.1
   flutter_animate: ^4.5.2
+  flutter_launcher_icons: ^0.14.4
 
   
 
@@ -50,6 +51,12 @@ dev_dependencies:
 # following page: https://dart.dev/tools/pub/pubspec
 
 # The following section is specific to Flutter packages.
+flutter_icons:
+  android: true
+  ios: true
+  adaptive_icon_background: "#FFFFFF" 
+  # remove_alpha_ios: true
+  image_path: "assets/icon/logo_sgam.png"
 flutter:
 
   # The following line ensures that the Material Icons font is
