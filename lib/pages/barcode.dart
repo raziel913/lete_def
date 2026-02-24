@@ -16,6 +16,7 @@ import 'package:wakelock_plus/wakelock_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
+import 'package:audioplayers/audioplayers.dart';
 
 class Barcodex extends StatefulWidget {
   @override
@@ -29,17 +30,21 @@ class MyHomeState extends State<Barcodex> with SingleTickerProviderStateMixin {
   bool errore = false;
   bool dirState = false;
   bool _isLoading = false;
+  bool _isDialogOpen = false;
   String? selectedId;
   bool? presenzaLinea;
   final FocusNode _focusNode = FocusNode();
   String? messaggioLinea;
+  final player = AudioPlayer();
   TextEditingController _controller = TextEditingController();
   String? lastBarcode;
+  String? barcodeSscc;
   String _barcodeBuffer = "";
+  Barcode? _barcode;
   late StreamSubscription<List<ConnectivityResult>> _connectivitySubscription;
   List<Map<String, dynamic>> _eltabella1 = [];
-    List<Map<String, dynamic>> _eltabella2 = [];
-      List<Map<String, dynamic>> _eltabella3 = [];
+  List<Map<String, dynamic>> _eltabella2 = [];
+  List<Map<String, dynamic>> _eltabella3 = [];
   List<ConnectivityResult>? connectivityRisultato;
   RefreshController _refreshController = RefreshController(
     initialRefresh: false,
@@ -47,7 +52,6 @@ class MyHomeState extends State<Barcodex> with SingleTickerProviderStateMixin {
   final MobileScannerController controllerCam = MobileScannerController(
     autoStart: false,
   );
-  Barcode? _barcode;
 
   // FUNZIONI
 
@@ -64,21 +68,18 @@ class MyHomeState extends State<Barcodex> with SingleTickerProviderStateMixin {
         if (result[0] == ConnectivityResult.none) {
           presenzaLinea = false;
           messaggioLinea = 'Connessione Assente';
-          mt.MotionToast.warning(
-            title: Text(
-              "ATTENZIONE!",
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-            ),
-            width: 400, // Imposta una larghezza personalizzata
-            height: 150,
-            description: Text(messaggioLinea!, style: TextStyle(fontSize: 16)),
-            toastDuration: Duration(seconds: 10),
-         animationType: mt.AnimationType.slideInFromTop,
-          ).show(context);
+
+          if (!_isDialogOpen) {
+            showAlertConnection(context);
+          }
         } else {
           presenzaLinea = true;
           messaggioLinea = 'Connessione Attiva';
-          // recheckVersion();
+
+          if (_isDialogOpen) {
+            Navigator.of(context).pop();
+            _isDialogOpen = false;
+          }
         }
       });
     });
@@ -90,25 +91,21 @@ class MyHomeState extends State<Barcodex> with SingleTickerProviderStateMixin {
     if (connectivityRisultato!.contains(ConnectivityResult.none)) {
       setState(() {
         presenzaLinea = false;
-        messaggioLinea = 'Connessione Assente!';
-        mt.MotionToast.warning(
-          title: Text(
-            "ATTENZIONE!",
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-          ),
-          width: 400, // Imposta una larghezza personalizzata
-          height: 150,
-          description: Text(messaggioLinea!, style: TextStyle(fontSize: 16)),
-          toastDuration: Duration(seconds: 5),
-          dismissable: true,
-          toastAlignment: Alignment.topCenter,
-            animationType: mt.AnimationType.slideInFromTop,
-        ).show(context);
+        messaggioLinea = 'Connessione Assente';
+
+        if (!_isDialogOpen) {
+          showAlertConnection(context);
+        }
       });
     } else {
       setState(() {
         presenzaLinea = true;
         messaggioLinea = 'Connessione Attiva';
+
+        if (_isDialogOpen) {
+          Navigator.of(context).pop();
+          _isDialogOpen = false;
+        }
       });
     }
   }
@@ -144,11 +141,27 @@ class MyHomeState extends State<Barcodex> with SingleTickerProviderStateMixin {
     ).show();
   }
 
-  // AZIONETURNO
-  Future<void> azioneQr() async {
-      setState(() {
+  void showAlertConnection(BuildContext context) {
+    _isDialogOpen = true;
+    Alert(
+      context: context,
+      type: AlertType.error,
+      title: "CONNESSIONE ASSENTE",
+      desc: "Attiva la Conessione a Internet",
+      closeFunction: () {
+        _isDialogOpen = false;
+      },
+      style: AlertStyle(
+        isOverlayTapDismiss: false, // Disabilita la chiusura cliccando fuori
+      ),
+      buttons: [],
+    ).show();
+  }
+
+  // AZIONECONSEGNA
+  Future<void> azioneConsegna() async {
+    setState(() {
       _isLoading = true;
-    
     });
     var payload = jsonEncode({"nomeConsegna": lastBarcode});
     var url = Uri.parse("${Globals.globalAPI}/api/sscc/consegna/verifica");
@@ -163,69 +176,138 @@ class MyHomeState extends State<Barcodex> with SingleTickerProviderStateMixin {
     );
     print(response.statusCode);
     if (response.statusCode == 401) {
+      await player.play(AssetSource('sounds/error.mp3'));
       showAlert(context, 'Errore Generale!');
       hideLoadingDialog(context);
     } else {
+      await player.play(AssetSource('sounds/ok.mp3'));
       var responseData = jsonDecode(response.body);
       hideLoadingDialog(context);
-      if(responseData['successo']==true){
-       _eltabella1 = List<Map<String, dynamic>>.from(
-  responseData['consegna']['prodotti']
-);
+      if (responseData['successo'] == true) {
+        _eltabella1 = List<Map<String, dynamic>>.from(
+          responseData['consegna']['prodotti'],
+        );
 
-  // prodottiDaScansionare
-  final prodottiDaScansionare =
-      responseData['consegna']['prodottiDaScansionare'];
+        // prodottiDaScansionare
+        final prodottiDaScansionare =
+            responseData['consegna']['prodottiDaScansionare'];
 
-  if (prodottiDaScansionare != null &&
-      prodottiDaScansionare is List &&
-      prodottiDaScansionare.isNotEmpty) {
+        if (prodottiDaScansionare != null &&
+            prodottiDaScansionare is List &&
+            prodottiDaScansionare.isNotEmpty) {
+          _eltabella2 = List<Map<String, dynamic>>.from(prodottiDaScansionare);
+        } else {
+          _eltabella2 = []; // 👈 array vuoto
+        }
 
-    _eltabella2 = List<Map<String, dynamic>>.from(
-      prodottiDaScansionare,
-    );
-  }else {
+        // prodottiDaControllare
+        final prodottiDaControllare =
+            responseData['consegna']['prodottiDaControllare'];
 
-  _eltabella2 = [];  // 👈 array vuoto
-
-}
-
-  // prodottiDaControllare
-  final prodottiDaControllare =
-      responseData['consegna']['prodottiDaControllare'];
-
-  if (prodottiDaControllare != null &&
-      prodottiDaControllare is List &&
-      prodottiDaControllare.isNotEmpty) {
-
-    _eltabella3 = List<Map<String, dynamic>>.from(
-      prodottiDaControllare,
-    );
-  }else {
-
-  _eltabella3 = [];  // 👈 array vuoto
-
-}
-      }else{
-          mt.MotionToast.warning(
-  title: Text(
-    "ATTENZIONE!",
-    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-  ),
-  description: Text(
-    responseData['errore'],
-    style: TextStyle(fontSize: 16),
-  ),
-  width: 250,
-  height: 100,
-  toastDuration: Duration(seconds: 5),
-  animationType: mt.AnimationType.slideInFromLeft, // ← usa il prefisso
-).show(context);
+        if (prodottiDaControllare != null &&
+            prodottiDaControllare is List &&
+            prodottiDaControllare.isNotEmpty) {
+          _eltabella3 = List<Map<String, dynamic>>.from(prodottiDaControllare);
+        } else {
+          _eltabella3 = []; // 👈 array vuoto
+        }
+      } else {
+        await player.play(AssetSource('sounds/error.mp3'));
+        mt.MotionToast.warning(
+          title: Text(
+            "ATTENZIONE!",
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+          ),
+          description: Text(
+            responseData['errore'],
+            style: TextStyle(fontSize: 16),
+          ),
+          width: 250,
+          height: 100,
+          toastDuration: Duration(seconds: 5),
+          animationType: mt.AnimationType.slideInFromLeft, // ← usa il prefisso
+        ).show(context);
       }
-           setState(() {
-      _isLoading = false;
-    
+      setState(() {
+        _isLoading = false;
+      });
+      // showAlert(context, "ssdfdsfsdds");
+    }
+  }
+
+  // AZIONEASSOICA
+  Future<void> azioneAssocia() async {
+    setState(() {
+      _isLoading = true;
     });
+
+    var payload = jsonEncode({
+      "nomeConsegna": lastBarcode,
+      "sscc": barcodeSscc,
+    });
+    var url = Uri.parse("${Globals.globalAPI}/api/sscc/consegna/associa");
+    print(url);
+    var response = await http.post(
+      url,
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': "Bearer ${Globals.globalToken}",
+      },
+      body: payload,
+    );
+    print(response.statusCode);
+    if (response.statusCode == 401) {
+      await player.play(AssetSource('sounds/error.mp3'));
+      showAlert(context, 'Errore Generale!');
+      hideLoadingDialog(context);
+    } else {
+      await player.play(AssetSource('sounds/ok.mp3'));
+      var responseData = jsonDecode(response.body);
+      hideLoadingDialog(context);
+      if (responseData['successo'] == true) {
+        // prodottiDaScansionare
+        final prodottiDaScansionare =
+            responseData['prodottiDaScansionare'];
+
+        if (prodottiDaScansionare != null &&
+            prodottiDaScansionare is List &&
+            prodottiDaScansionare.isNotEmpty) {
+          _eltabella2 = List<Map<String, dynamic>>.from(prodottiDaScansionare);
+        } else {
+          _eltabella2 = []; // 👈 array vuoto
+        }
+
+        // prodottiDaControllare
+        final prodottiDaControllare =
+            responseData['prodottiDaControllare'];
+
+        if (prodottiDaControllare != null &&
+            prodottiDaControllare is List &&
+            prodottiDaControllare.isNotEmpty) {
+          _eltabella3 = List<Map<String, dynamic>>.from(prodottiDaControllare);
+        } else {
+          _eltabella3 = []; // 👈 array vuoto
+        }
+      } else {
+        await player.play(AssetSource('sounds/error.mp3'));
+        mt.MotionToast.warning(
+          title: Text(
+            "ATTENZIONE!",
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+          ),
+          description: Text(
+            responseData['errore'],
+            style: TextStyle(fontSize: 16),
+          ),
+          width: 250,
+          height: 100,
+          toastDuration: Duration(seconds: 5),
+          animationType: mt.AnimationType.slideInFromLeft, // ← usa il prefisso
+        ).show(context);
+      }
+      setState(() {
+        _isLoading = false;
+      });
       // showAlert(context, "ssdfdsfsdds");
     }
   }
@@ -259,7 +341,7 @@ class MyHomeState extends State<Barcodex> with SingleTickerProviderStateMixin {
   }
 
   // LOADER
-  Future<void> showLoadingDialog(BuildContext context) async {
+  Future<void> showLoadingDialog(BuildContext context, String parametro) async {
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -279,33 +361,71 @@ class MyHomeState extends State<Barcodex> with SingleTickerProviderStateMixin {
         );
       },
     );
-    // await Future.delayed(Duration(milliseconds: 1500));
-   await azioneQr();
+    if (lastBarcode == null) {
+      hideLoadingDialog(context);
+      await player.play(AssetSource('sounds/error.mp3'));
+      setState(() {
+        barcodeSscc = null;
+      });
+      barcodeSscc = null;
+      mt.MotionToast.warning(
+        title: Text(
+          "ATTENZIONE!",
+          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+        ),
+        description: Text(
+          "Scansiona Ordine di consegna",
+          style: TextStyle(fontSize: 16),
+        ),
+        width: 250,
+        height: 100,
+        toastDuration: Duration(seconds: 5),
+        animationType: mt.AnimationType.slideInFromLeft, // ← usa il prefisso
+      ).show(context);
+      return; // esce subito dalla funzione
+    }
+    if (parametro.startsWith("WH")) {
+      await azioneConsegna();
+    } else {
+      await azioneAssocia();
+    }
+
     //  hideLoadingDialog(context);
   }
 
   // NASCONDI LOADER
   void hideLoadingDialog(BuildContext context) {
     Navigator.of(context).pop();
-   
   }
-// CODICE A BARRA
+
+  // CODICE A BARRA
   void _processBarcode(String value) {
     setState(() {
-      lastBarcode = value;
+      if (value.startsWith("WH")) {
+        lastBarcode = value;
+      } else {
+        barcodeSscc = value;
+      }
       _barcodeBuffer = "";
     });
-    showLoadingDialog(context);
+    showLoadingDialog(context, value);
   }
-// CAMERA
+
+  // CAMERA
   void _handleBarcode(BarcodeCapture barcodes) {
     if (mounted) {
       setState(() {
         _barcode = barcodes.barcodes.firstOrNull;
         print(_barcode!.displayValue);
-        lastBarcode = _barcode!.displayValue;
+        if (_barcode!.displayValue!.startsWith("WH")) {
+          barcodeSscc = null;
+
+          lastBarcode = _barcode!.displayValue;
+        } else {
+          barcodeSscc = _barcode!.displayValue;
+        }
       });
-      showLoadingDialog(context);
+      showLoadingDialog(context, _barcode?.displayValue ?? "Sconosciuto");
       _toggleScanner();
     }
   }
@@ -331,13 +451,14 @@ class MyHomeState extends State<Barcodex> with SingleTickerProviderStateMixin {
     _focusNode.dispose();
     controllerCam.stop();
     controllerCam.dispose();
+    player.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    final screenHeight = MediaQuery.of(context).size.height;
-    final appBarHeight = screenHeight * 0.5;
+    // final screenHeight = MediaQuery.of(context).size.height;
+    // final appBarHeight = screenHeight * 0.5;
 
     return PopScope(
       canPop: false,
@@ -365,50 +486,64 @@ class MyHomeState extends State<Barcodex> with SingleTickerProviderStateMixin {
             child: Stack(
               children: [
                 _isLoading
-              ? Center(
-                  child: CircularProgressIndicator(),
-                )
-              : 
-                SingleChildScrollView(
-                 
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.start,
-                      
-                      children: [
-                        KeyboardListener(
-                          focusNode: _focusNode,
-                          autofocus: true,
-                          onKeyEvent: (KeyEvent event) {
-                            if (event is KeyDownEvent) {
-                              // Usa "character" se disponibile
-                              final String? char = event.character;
+                    ? Center(child: CircularProgressIndicator())
+                    : SingleChildScrollView(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.start,
 
-                              if (char != null && char.isNotEmpty) {
-                                if (char == '\n') {
-                                  _processBarcode(_barcodeBuffer);
-                                } else {
-                                  _barcodeBuffer += char;
+                          children: [
+                            KeyboardListener(
+                              focusNode: _focusNode,
+                              autofocus: true,
+                              onKeyEvent: (KeyEvent event) {
+                                if (event is KeyDownEvent) {
+                                  // Usa "character" se disponibile
+                                  final String? char = event.character;
+
+                                  if (char != null && char.isNotEmpty) {
+                                    if (char == '\n') {
+                                      _processBarcode(_barcodeBuffer);
+                                    } else {
+                                      _barcodeBuffer += char;
+                                    }
+                                  }
                                 }
-                              }
-                            }
-                          },
-                          child: Text(
-                            "Ordine di Consegna: $lastBarcode", // qui il valore cambia dinamicamente
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
+                              },
+                              child: Row(
+                                children: [
+                                  Column(
+                                     crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        "N°Ordine: ${lastBarcode ?? ''}", // se null mostra stringa vuota
+                                        style: TextStyle(
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+
+                                      Text(
+                                        "SSCC: ${barcodeSscc ?? ''}", // se null mostra stringa vuota
+                                        style: TextStyle(
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
                             ),
-                          ),                    
-                        ),
-                          SizedBox(height: 10),
+                            SizedBox(height: 10),
                             SingleChildScrollView(
                               physics: BouncingScrollPhysics(),
                               scrollDirection: Axis.horizontal,
                               child: SizedBox(
-                                   width: MediaQuery.of(context).size.width,
+                                width: MediaQuery.of(context).size.width,
                                 child: DataTable(
                                   headingRowColor: WidgetStateProperty.all(
-                                      Color.fromARGB(255, 233, 230, 221)),
+                                    Color.fromARGB(255, 233, 230, 221),
+                                  ),
                                   dataRowMaxHeight: 70,
                                   columnSpacing: 30,
                                   columns: const <DataColumn>[
@@ -436,26 +571,19 @@ class MyHomeState extends State<Barcodex> with SingleTickerProviderStateMixin {
                                         ),
                                       ),
                                     ),
-                                    
                                   ],
                                   rows: _eltabella1.map((item) {
                                     // DateTime tempo =
                                     //     DateTime.parse(item['dataOra']!);
                                     return DataRow(
                                       cells: <DataCell>[
+                                        DataCell(Text(item['nome'].toString())),
                                         DataCell(
-                                          Text(
-                                                  item['nome'].toString()),
+                                          Text(item['quantita'].toString()),
                                         ),
                                         DataCell(
-                                          Text(
-                                                  item['quantita'].toString()),
+                                          Text(item['unitaMisura'].toString()),
                                         ),
-                                     DataCell(
-                                          Text(
-                                                  item['unitaMisura'].toString()),
-                                        ),
-                                       
                                       ],
                                     );
                                   }).toList(),
@@ -463,129 +591,168 @@ class MyHomeState extends State<Barcodex> with SingleTickerProviderStateMixin {
                               ),
                             ),
                             // SECONDA TAB
-                          if (_eltabella2 != null && _eltabella2.isNotEmpty) ...[
-  Padding(
-    padding: EdgeInsets.only(top: 10, bottom: 10),
-    child: Divider(
-      color: Theme.of(context).primaryColor,
-      thickness: 2,
-      height: 15,
-    ),
-  ),
-  SingleChildScrollView(
-    physics: BouncingScrollPhysics(),
-    scrollDirection: Axis.horizontal,
-    child: SizedBox(
-      width: MediaQuery.of(context).size.width,
-      child: DataTable(
-        headingRowColor: WidgetStateProperty.all(
-          Color.fromARGB(255, 233, 230, 221),
-        ),
-        dataRowMaxHeight: 70,
-        columnSpacing: 30,
-        columns: const <DataColumn>[
-          DataColumn(
-            label: Text(
-              'Prodotto',
-              style: TextStyle(fontWeight: FontWeight.bold),
-            ),
-          ),
-          DataColumn(
-            label: Text(
-              'Richiesta',
-              style: TextStyle(fontWeight: FontWeight.bold),
-            ),
-          ),
-          DataColumn(
-            label: Text(
-              'Scans.',
-              style: TextStyle(fontWeight: FontWeight.bold),
-            ),
-          ),
-          DataColumn(
-            label: Text(
-              'Residua',
-              style: TextStyle(fontWeight: FontWeight.bold),
-            ),
-          ),
-        ],
-        rows: _eltabella2.map((item) {
-          return DataRow(
-            cells: <DataCell>[
-              DataCell(Text(item['prodotto'].toString())),
-                 DataCell(Text(item['quantitaRichiesta'].toString())),
-              DataCell(Text(item['quantitaScansionata'].toString())),
-              DataCell(Text(item['quantitaResidua'].toString())),
-            ],
-          );
-        }).toList(),
-      ),
-    ),
-  ),
-],
+                            if (_eltabella2 != null &&
+                                _eltabella2.isNotEmpty) ...[
+                              Padding(
+                                padding: EdgeInsets.only(top: 10, bottom: 10),
+                                child: Divider(
+                                  color: Theme.of(context).primaryColor,
+                                  thickness: 2,
+                                  height: 15,
+                                ),
+                              ),
+                              SingleChildScrollView(
+                                physics: BouncingScrollPhysics(),
+                                scrollDirection: Axis.horizontal,
+                                child: SizedBox(
+                                  width: MediaQuery.of(context).size.width,
+                                  child: DataTable(
+                                    headingRowColor: WidgetStateProperty.all(
+                                      Color.fromARGB(255, 233, 230, 221),
+                                    ),
+                                    dataRowMaxHeight: 70,
+                                    columnSpacing: 30,
+                                    columns: const <DataColumn>[
+                                      DataColumn(
+                                        label: Text(
+                                          'Prodotto',
+                                          style: TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                      ),
+                                      DataColumn(
+                                        label: Text(
+                                          'Richiesta',
+                                          style: TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                      ),
+                                      DataColumn(
+                                        label: Text(
+                                          'Scans.',
+                                          style: TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                      ),
+                                      DataColumn(
+                                        label: Text(
+                                          'Residua',
+                                          style: TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                    rows: _eltabella2.map((item) {
+                                      return DataRow(
+                                        cells: <DataCell>[
+                                          DataCell(
+                                            Text(item['prodotto'].toString()),
+                                          ),
+                                          DataCell(
+                                            Text(
+                                              item['quantitaRichiesta']
+                                                  .toString(),
+                                            ),
+                                          ),
+                                          DataCell(
+                                            Text(
+                                              item['quantitaScansionata']
+                                                  .toString(),
+                                            ),
+                                          ),
+                                          DataCell(
+                                            Text(
+                                              item['quantitaResidua']
+                                                  .toString(),
+                                            ),
+                                          ),
+                                        ],
+                                      );
+                                    }).toList(),
+                                  ),
+                                ),
+                              ),
+                            ],
 
-// TRZA TAB
-                           if (_eltabella3 != null && _eltabella3.isNotEmpty) ...[
-  Padding(
-    padding: EdgeInsets.only(top: 10, bottom: 10),
-    child: Divider(
-      color: Theme.of(context).primaryColor,
-      thickness: 2,
-      height: 15,
-    ),
-  ),
-  SingleChildScrollView(
-    physics: BouncingScrollPhysics(),
-    scrollDirection: Axis.horizontal,
-    child: SizedBox(
-      width: MediaQuery.of(context).size.width,
-      child: DataTable(
-        headingRowColor: WidgetStateProperty.all(
-          Color.fromARGB(255, 233, 230, 221),
-        ),
-        dataRowMaxHeight: 70,
-        columnSpacing: 30,
-        columns: const <DataColumn>[
-          DataColumn(
-            label: Text(
-              'Prodotto',
-              style: TextStyle(fontWeight: FontWeight.bold),
-            ),
-          ),
-          DataColumn(
-            label: Text(
-              'Da Controllare',
-              style: TextStyle(fontWeight: FontWeight.bold),
-            ),
-          ),
-          DataColumn(
-            label: Text(
-              'UoM',
-              style: TextStyle(fontWeight: FontWeight.bold),
-            ),
-          ),
-        ],
-        rows: _eltabella3.map((item) {
-          return DataRow(
-            cells: <DataCell>[
-              DataCell(Text(item['prodotto'].toString())),
-              DataCell(Text(item['quantitaDaControllare'].toString())),
-                 DataCell(Text(item['unitaMisura'].toString())),
-            
-            ],
-          );
-        }).toList(),
-      ),
-    ),
-  ),
-],
-
-
-                        
-                      ],
-                    ),
-                  
-                ),
+                            // TRZA TAB
+                            if (_eltabella3 != null &&
+                                _eltabella3.isNotEmpty) ...[
+                              Padding(
+                                padding: EdgeInsets.only(top: 10, bottom: 10),
+                                child: Divider(
+                                  color: Theme.of(context).primaryColor,
+                                  thickness: 2,
+                                  height: 15,
+                                ),
+                              ),
+                              SingleChildScrollView(
+                                physics: BouncingScrollPhysics(),
+                                scrollDirection: Axis.horizontal,
+                                child: SizedBox(
+                                  width: MediaQuery.of(context).size.width,
+                                  child: DataTable(
+                                    headingRowColor: WidgetStateProperty.all(
+                                      Color.fromARGB(255, 233, 230, 221),
+                                    ),
+                                    dataRowMaxHeight: 70,
+                                    columnSpacing: 30,
+                                    columns: const <DataColumn>[
+                                      DataColumn(
+                                        label: Text(
+                                          'Prodotto',
+                                          style: TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                      ),
+                                      DataColumn(
+                                        label: Text(
+                                          'Da Controllare',
+                                          style: TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                      ),
+                                      DataColumn(
+                                        label: Text(
+                                          'UoM',
+                                          style: TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                    rows: _eltabella3.map((item) {
+                                      return DataRow(
+                                        cells: <DataCell>[
+                                          DataCell(
+                                            Text(item['prodotto'].toString()),
+                                          ),
+                                          DataCell(
+                                            Text(
+                                              item['quantitaDaControllare']
+                                                  .toString(),
+                                            ),
+                                          ),
+                                          DataCell(
+                                            Text(
+                                              item['unitaMisura'].toString(),
+                                            ),
+                                          ),
+                                        ],
+                                      );
+                                    }).toList(),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ],
+                        ),
+                      ),
 
                 MobileScanner(
                   controller: controllerCam,

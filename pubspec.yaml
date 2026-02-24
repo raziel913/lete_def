@@ -28,6 +28,7 @@ dependencies:
   shared_preferences: ^2.5.4
   connectivity_plus: ^7.0.0
   mobile_scanner: ^7.2.0
+  audioplayers: ^6.5.1
 
   
 
@@ -56,6 +57,7 @@ flutter:
   uses-material-design: true
   assets:
    - assets/images/
+   - assets/sounds/
 
   # To add assets to your application, add an assets section, like this:
   # assets:

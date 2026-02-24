@@ -47,8 +47,6 @@ class MyHomeState extends State<Home> with SingleTickerProviderStateMixin {
   @override
   void initState() {
     super.initState();
-
-    chiudiCamera();
     checkConnessione();
     _connectivitySubscription = Connectivity().onConnectivityChanged.listen((
       List<ConnectivityResult> result,
@@ -116,18 +114,11 @@ class MyHomeState extends State<Home> with SingleTickerProviderStateMixin {
 
   // REFRESH RELOAD
   void _onRefresh() async {
-    chiudiCamera();
     checkConnessione();
     _refreshController.refreshCompleted();
   }
 
-  Future<void> chiudiCamera() async {
-    setState(() {
-      camState = false;
-      qr = null;
-    });
-    WakelockPlus.toggle(enable: false);
-  }
+
 
   void showAlertVersion(
     BuildContext context,
@@ -154,16 +145,6 @@ class MyHomeState extends State<Home> with SingleTickerProviderStateMixin {
     ).show();
   }
 
-  // AZIONETURNO
-  Future<void> azioneQr() async {
-    final SharedPreferences prefs = await SharedPreferences.getInstance();
-    var qrLavorato = jsonDecode(qr!);
-    await prefs.setString('urlOdoo', qrLavorato['domain']);
-    // await chiudiCamera();
-    print('YAaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa');
-
-    // showAlert(context, "ssdfdsfsdds");
-  }
 
   // SWEET ALERT
   void showAlert(BuildContext context, String message) {
@@ -214,8 +195,7 @@ class MyHomeState extends State<Home> with SingleTickerProviderStateMixin {
         );
       },
     );
-    await Future.delayed(Duration(milliseconds: 1500));
-    azioneQr();
+    
   }
 
   // NASCONDI LOADER
