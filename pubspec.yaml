@@ -25,7 +25,6 @@ dependencies:
   motion_toast: ^2.15.0
   refresh: ^1.0.1
   wakelock_plus: ^1.4.0
-  shared_preferences: ^2.5.4
   connectivity_plus: ^7.0.0
   mobile_scanner: ^7.2.0
   audioplayers: ^6.5.1
