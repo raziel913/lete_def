@@ -5,15 +5,11 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:rflutter_alert/rflutter_alert.dart';
 import 'package:motion_toast/motion_toast.dart' as mt;
-import 'package:intl/date_symbol_data_local.dart';
-import 'package:intl/intl.dart';
 import 'package:refresh/refresh.dart';
 import 'package:lete_sgam/pages/home.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:lete_sgam/global.dart';
 import 'package:flutter/services.dart';
-import 'package:wakelock_plus/wakelock_plus.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:audioplayers/audioplayers.dart';
@@ -245,9 +241,9 @@ class MyHomeState extends State<Barcodex> with SingleTickerProviderStateMixin {
             responseData['errore'],
             style: TextStyle(fontSize: 16),
           ),
-          width: 250,
+          width: 300,
           height: 100,
-          toastDuration: Duration(seconds: 5),
+          toastDuration: Duration(seconds: 10),
           animationType: mt.AnimationType.slideInFromLeft, // ← usa il prefisso
         ).show(context);
       }
@@ -328,9 +324,9 @@ class MyHomeState extends State<Barcodex> with SingleTickerProviderStateMixin {
             responseData['errore'],
             style: TextStyle(fontSize: 16),
           ),
-          width: 250,
+          width: 300,
           height: 100,
-          toastDuration: Duration(seconds: 5),
+          toastDuration: Duration(seconds: 10),
           animationType: mt.AnimationType.slideInFromLeft, // ← usa il prefisso
         ).show(context);
       }
@@ -402,9 +398,9 @@ class MyHomeState extends State<Barcodex> with SingleTickerProviderStateMixin {
             responseData['errore'],
             style: TextStyle(fontSize: 16),
           ),
-          width: 250,
+          width: 300,
           height: 100,
-          toastDuration: Duration(seconds: 5),
+          toastDuration: Duration(seconds: 10),
           animationType: mt.AnimationType.slideInFromLeft, // ← usa il prefisso
         ).show(context);
       }
@@ -713,79 +709,14 @@ class MyHomeState extends State<Barcodex> with SingleTickerProviderStateMixin {
                               ),
                             ),
                             SizedBox(height: 10),
+                            if (_eltabella1 != null &&
+                                _eltabella1.isNotEmpty) ...[
                               Text(
                                 'Panoramica',
-                                style: TextStyle(fontStyle: FontStyle.italic,fontSize: 16),
-                              ),
-                            SingleChildScrollView(
-                              physics: BouncingScrollPhysics(),
-                              scrollDirection: Axis.horizontal,
-                              child: SizedBox(
-                                width: MediaQuery.of(context).size.width,
-                                child: DataTable(
-                                  headingRowColor: WidgetStateProperty.all(
-                                    Color.fromARGB(255, 233, 230, 221),
-                                  ),
-                                  dataRowMaxHeight: 60,
-                                  columnSpacing: 30,
-                                  columns: const <DataColumn>[
-                                    DataColumn(
-                                      label: Text(
-                                        'Prodotto',
-                                        style: TextStyle(
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      ),
-                                    ),
-                                    DataColumn(
-                                      label: Text(
-                                        'Quantità',
-                                        style: TextStyle(
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      ),
-                                    ),
-                                    DataColumn(
-                                      label: Text(
-                                        'UoM',
-                                        style: TextStyle(
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                  rows: _eltabella1.map((item) {
-                                    // DateTime tempo =
-                                    //     DateTime.parse(item['dataOra']!);
-                                    return DataRow(
-                                      cells: <DataCell>[
-                                        DataCell(Text(item['nome'].toString())),
-                                        DataCell(
-                                          Center(child: Text(item['quantita'].toString())),
-                                        ),
-                                        DataCell(
-                                          Text(item['unitaMisura'].toString()),
-                                        ),
-                                      ],
-                                    );
-                                  }).toList(),
+                                style: TextStyle(
+                                  fontStyle: FontStyle.italic,
+                                  fontSize: 16,
                                 ),
-                              ),
-                            ),
-                            // SECONDA TAB
-                            if (_eltabella2 != null &&
-                                _eltabella2.isNotEmpty) ...[
-                              Padding(
-                                padding: EdgeInsets.only(top: 10, bottom: 10),
-                                child: Divider(
-                                  color: Theme.of(context).primaryColor,
-                                  thickness: 2,
-                                  height: 15,
-                                ),
-                              ),
-                              Text(
-                                'Da Associare',
-                                style: TextStyle(fontStyle: FontStyle.italic, fontSize: 16),
                               ),
                               SingleChildScrollView(
                                 physics: BouncingScrollPhysics(),
@@ -809,109 +740,9 @@ class MyHomeState extends State<Barcodex> with SingleTickerProviderStateMixin {
                                       ),
                                       DataColumn(
                                         label: Text(
-                                          'Richiesta',
+                                          'Quantità',
                                           style: TextStyle(
                                             fontWeight: FontWeight.bold,
-                                          ),
-                                        ),
-                                      ),
-                                      DataColumn(
-                                        label: Text(
-                                          'Scan.',
-                                          style: TextStyle(
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                        ),
-                                      ),
-                                      DataColumn(
-                                        label: Text(
-                                          'Residua',
-                                          style: TextStyle(
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                        ),
-                                      ),
-                                    ],
-                                    rows: _eltabella2.map((item) {
-                                      return DataRow(
-                                        cells: <DataCell>[
-                                          DataCell(
-                                            Text(item['prodotto'].toString()),
-                                          ),
-                                          DataCell(
-                                            Center(
-                                              child: Text(
-                                                item['quantitaRichiesta']
-                                                    .toString(),
-                                              ),
-                                            ),
-                                          ),
-                                          DataCell(
-                                            Center(
-                                              child: Text(
-                                                item['quantitaScansionata']
-                                                    .toString(),
-                                              ),
-                                            ),
-                                          ),
-                                          DataCell(
-                                            Center(
-                                              child: Text(
-                                                item['quantitaResidua']
-                                                    .toString(),
-                                              ),
-                                            ),
-                                          ),
-                                        ],
-                                      );
-                                    }).toList(),
-                                  ),
-                                ),
-                              ),
-                            ],
-
-                            if (validazione &&
-                                _eltabella3 != null &&
-                                _eltabella3.isNotEmpty) ...[
-                              Padding(
-                                padding: EdgeInsets.only(top: 10, bottom: 10),
-                                child: Divider(
-                                  color: Theme.of(context).primaryColor,
-                                  thickness: 2,
-                                  height: 15,
-                                ),
-                              ),
-                              Text(
-                                'Da Validare',
-                                style: TextStyle(fontStyle: FontStyle.italic,fontSize: 16),
-                              ),
-                              SingleChildScrollView(
-                                physics: BouncingScrollPhysics(),
-                                scrollDirection: Axis.horizontal,
-                                child: SizedBox(
-                                  width: MediaQuery.of(context).size.width,
-                                  child: DataTable(
-                                    headingRowColor: WidgetStateProperty.all(
-                                      Color.fromARGB(255, 233, 230, 221),
-                                    ),
-                                    dataRowMaxHeight: 60,
-                                    columnSpacing: 30,
-                                    columns: const <DataColumn>[
-                                      DataColumn(
-                                        label: Text(
-                                          'Prodotto',
-                                          style: TextStyle(
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                        ),
-                                      ),
-                                      DataColumn(
-                                        label: Center(
-                                          child: Text(
-                                            'Da Controllare',
-                                            style: TextStyle(
-                                              fontWeight: FontWeight.bold,
-                                            ),
                                           ),
                                         ),
                                       ),
@@ -924,16 +755,19 @@ class MyHomeState extends State<Barcodex> with SingleTickerProviderStateMixin {
                                         ),
                                       ),
                                     ],
-                                    rows: _eltabella3.map((item) {
+                                    rows: _eltabella1.map((item) {
+                                      // DateTime tempo =
+                                      //     DateTime.parse(item['dataOra']!);
                                       return DataRow(
                                         cells: <DataCell>[
                                           DataCell(
-                                            Text(item['prodotto'].toString()),
+                                            Text(item['nome'].toString()),
                                           ),
                                           DataCell(
-                                            Text(
-                                              item['quantitaDaControllare']
-                                                  .toString(),
+                                            Center(
+                                              child: Text(
+                                                item['quantita'].toString(),
+                                              ),
                                             ),
                                           ),
                                           DataCell(
@@ -947,6 +781,225 @@ class MyHomeState extends State<Barcodex> with SingleTickerProviderStateMixin {
                                   ),
                                 ),
                               ),
+                              // SECONDA TAB
+                              if (_eltabella2 != null &&
+                                  _eltabella2.isNotEmpty) ...[
+                                Padding(
+                                  padding: EdgeInsets.only(top: 10, bottom: 10),
+                                  child: Divider(
+                                    color: Theme.of(context).primaryColor,
+                                    thickness: 2,
+                                    height: 15,
+                                  ),
+                                ),
+                                Text(
+                                  'Da Associare',
+                                  style: TextStyle(
+                                    fontStyle: FontStyle.italic,
+                                    fontSize: 16,
+                                  ),
+                                ),
+                                SingleChildScrollView(
+                                  physics: BouncingScrollPhysics(),
+                                  scrollDirection: Axis.horizontal,
+                                  child: SizedBox(
+                                    width: MediaQuery.of(context).size.width,
+                                    child: DataTable(
+                                      headingRowColor: WidgetStateProperty.all(
+                                        Color.fromARGB(255, 233, 230, 221),
+                                      ),
+                                      dataRowMaxHeight: 60,
+                                      columnSpacing: 30,
+                                      columns: const <DataColumn>[
+                                        DataColumn(
+                                          label: Text(
+                                            'Prodotto',
+                                            style: TextStyle(
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
+                                        ),
+                                        DataColumn(
+                                          label: Text(
+                                            'Richiesta',
+                                            style: TextStyle(
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
+                                        ),
+                                        DataColumn(
+                                          label: Text(
+                                            'Scan.',
+                                            style: TextStyle(
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
+                                        ),
+                                        DataColumn(
+                                          label: Text(
+                                            'Residua',
+                                            style: TextStyle(
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                      rows: _eltabella2.map((item) {
+                                        return DataRow(
+                                          cells: <DataCell>[
+                                            DataCell(
+                                              Text(item['prodotto'].toString()),
+                                            ),
+                                            DataCell(
+                                              Center(
+                                                child: Text(
+                                                  item['quantitaRichiesta']
+                                                      .toString(),
+                                                ),
+                                              ),
+                                            ),
+                                            DataCell(
+                                              Center(
+                                                child: Text(
+                                                  item['quantitaScansionata']
+                                                      .toString(),
+                                                ),
+                                              ),
+                                            ),
+                                            DataCell(
+                                              Center(
+                                                child: Text(
+                                                  item['quantitaResidua']
+                                                      .toString(),
+                                                ),
+                                              ),
+                                            ),
+                                          ],
+                                        );
+                                      }).toList(),
+                                    ),
+                                  ),
+                                ),
+                              ],
+
+                              if (validazione &&
+                                  _eltabella3 != null &&
+                                  _eltabella3.isNotEmpty) ...[
+                                Padding(
+                                  padding: EdgeInsets.only(top: 10, bottom: 10),
+                                  child: Divider(
+                                    color: Theme.of(context).primaryColor,
+                                    thickness: 2,
+                                    height: 15,
+                                  ),
+                                ),
+                                Text(
+                                  'Da Validare',
+                                  style: TextStyle(
+                                    fontStyle: FontStyle.italic,
+                                    fontSize: 16,
+                                  ),
+                                ),
+                                SingleChildScrollView(
+                                  physics: BouncingScrollPhysics(),
+                                  scrollDirection: Axis.horizontal,
+                                  child: SizedBox(
+                                    width: MediaQuery.of(context).size.width,
+                                    child: DataTable(
+                                      headingRowColor: WidgetStateProperty.all(
+                                        Color.fromARGB(255, 233, 230, 221),
+                                      ),
+                                      dataRowMaxHeight: 60,
+                                      columnSpacing: 30,
+                                      columns: const <DataColumn>[
+                                        DataColumn(
+                                          label: Text(
+                                            'Prodotto',
+                                            style: TextStyle(
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
+                                        ),
+                                        DataColumn(
+                                          label: Center(
+                                            child: Text(
+                                              'Da Controllare',
+                                              style: TextStyle(
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                        DataColumn(
+                                          label: Text(
+                                            'UoM',
+                                            style: TextStyle(
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                      rows: _eltabella3.map((item) {
+                                        return DataRow(
+                                          cells: <DataCell>[
+                                            DataCell(
+                                              Text(item['prodotto'].toString()),
+                                            ),
+                                            DataCell(
+                                              Text(
+                                                item['quantitaDaControllare']
+                                                    .toString(),
+                                              ),
+                                            ),
+                                            DataCell(
+                                              Text(
+                                                item['unitaMisura'].toString(),
+                                              ),
+                                            ),
+                                          ],
+                                        );
+                                      }).toList(),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ] else ...[
+                              Padding(
+                                  padding: EdgeInsets.only(top: 10, bottom: 10),
+                                  child: Divider(
+                                    color: Theme.of(context).primaryColor,
+                                    thickness: 2,
+                                    height: 15,
+                                  ),
+                                ),
+                              SizedBox(height: 30),
+                              Text(
+                                'INIZIA A SCANNERIZZARE',
+                                style: GoogleFonts.lato(
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                                 SizedBox(height: 50),
+                              Icon(
+      Icons.qr_code_scanner_rounded,
+      size: 100,
+      color:  Color(0xFF243364),
+    )
+        .animate(onPlay: (controller) => controller.repeat())
+        .scale(
+          begin: const Offset(1, 1),
+          end: const Offset(1.12, 1.12),
+          duration: 1200.ms,
+          curve: Curves.easeInOut,
+        )
+        .then()
+        .scale(
+          begin: const Offset(1.12, 1.12),
+          end: const Offset(1, 1),
+          duration: 1200.ms,
+          curve: Curves.easeInOut,
+        )
                             ],
                           ],
                         ),
