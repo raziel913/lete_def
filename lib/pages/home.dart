@@ -201,7 +201,7 @@ class MyHomeState extends State<Home> with SingleTickerProviderStateMixin {
     final screenHeight = MediaQuery.of(context).size.height;
     final screenWidth = MediaQuery.of(context).size.width;
     final orientation = MediaQuery.of(context).orientation;
-    final appBarHeight = screenHeight * 0.3;
+    final appBarHeight = screenHeight * 0.27;
     return PopScope(
       canPop: false,
       child: Scaffold(
@@ -227,14 +227,14 @@ class MyHomeState extends State<Home> with SingleTickerProviderStateMixin {
                         child: AppBar(
                            automaticallyImplyLeading: false,
                           centerTitle: true,
-                          title: SizedBox(
-                            height: 57,
-                            child: Image(
-                              image: AssetImage('assets/images/logo_sgam.png'),
-                              fit: BoxFit
-                                  .contain, // Per mantenere le proporzioni dell'immagine
-                            ),
-                          ),
+                          // title: SizedBox(
+                          //   height: 57,
+                          //   child: Image(
+                          //     image: AssetImage('assets/images/logo_sgam.png'),
+                          //     fit: BoxFit
+                          //         .contain, // Per mantenere le proporzioni dell'immagine
+                          //   ),
+                          // ),
                           // automaticallyImplyLeading: false,
                           backgroundColor: Theme.of(
                             context,
@@ -286,7 +286,7 @@ class MyHomeState extends State<Home> with SingleTickerProviderStateMixin {
                     ),
 
                     Padding(
-                      padding: const EdgeInsets.all(8.0),
+                      padding: const EdgeInsets.all(0),
 
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
@@ -300,7 +300,7 @@ class MyHomeState extends State<Home> with SingleTickerProviderStateMixin {
                             ),
                           ),
                           Padding(
-                            padding: EdgeInsets.only(top: 20, bottom: 20),
+                            padding: EdgeInsets.only(top: 10, bottom: 10),
                             child: Divider(
                               color: Theme.of(
                                 context,
@@ -329,9 +329,9 @@ class MyHomeState extends State<Home> with SingleTickerProviderStateMixin {
                                     child: Card(
                                       elevation: 20,
                                       child: Container(
-                                        width: screenWidth * 0.4,
+                                        width: screenWidth * 0.35,
                                         child: Padding(
-                                          padding: const EdgeInsets.all(12),
+                                          padding: const EdgeInsets.all(8),
                                           child: Column(
                                             mainAxisAlignment:
                                                 MainAxisAlignment.start,
@@ -343,11 +343,11 @@ class MyHomeState extends State<Home> with SingleTickerProviderStateMixin {
                                                 color: Theme.of(
                                                   context,
                                                 ).colorScheme.primary,
-                                                size: 100.0,
+                                                size: 80.0,
                                               ),
-                                              SizedBox(height: 12),
+                                              SizedBox(height: 8),
                                               Text(
-                                                "BARCODE",
+                                                "ASSOCIA",
                                                 style: GoogleFonts.lato(
                                                   fontSize: 16,
                                                   fontWeight: FontWeight.bold,
@@ -371,9 +371,9 @@ class MyHomeState extends State<Home> with SingleTickerProviderStateMixin {
                                     child: Card(
                                       elevation: 6,
                                       child: Container(
-                                        width: screenWidth * 0.4,
+                                        width: screenWidth * 0.35,
                                         child: Padding(
-                                          padding: const EdgeInsets.all(12),
+                                          padding: const EdgeInsets.all(8),
                                           child: Column(
                                             mainAxisAlignment:
                                                 MainAxisAlignment.start,
@@ -381,16 +381,16 @@ class MyHomeState extends State<Home> with SingleTickerProviderStateMixin {
                                                 CrossAxisAlignment.center,
                                             children: [
                                               Icon(
-                                                Icons.camera_alt_rounded,
+                                                Icons.move_to_inbox,
                                                 color: Theme.of(
                                                   context,
                                                 ).colorScheme.primary,
-                                                size: 100.0,
+                                                size: 80.0,
                                               ),
 
-                                              SizedBox(height: 12),
+                                              SizedBox(height: 8),
                                               Text(
-                                                "CAMERA(beta)",
+                                                "PACKING",
                                                 style: GoogleFonts.lato(
                                                   fontSize: 16,
                                                   fontWeight: FontWeight.bold,

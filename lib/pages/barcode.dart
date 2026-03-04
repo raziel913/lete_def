@@ -33,6 +33,8 @@ class MyHomeState extends State<Barcodex> with SingleTickerProviderStateMixin {
   bool _isDialogOpen = false;
   String? selectedId;
   bool? presenzaLinea;
+  double totaleScansionato = 0;
+double totaleRichiesto = 0;
   final FocusNode _focusNode = FocusNode();
   String? messaggioLinea;
   final player = AudioPlayer();
@@ -84,6 +86,8 @@ class MyHomeState extends State<Barcodex> with SingleTickerProviderStateMixin {
       });
     });
   }
+
+   
 
   Future<void> checkConnessione() async {
     connectivityRisultato = await Connectivity().checkConnectivity();
@@ -160,8 +164,11 @@ class MyHomeState extends State<Barcodex> with SingleTickerProviderStateMixin {
 
   // AZIONECONSEGNA
   Future<void> azioneConsegna() async {
+
     setState(() {
       _isLoading = true;
+        totaleRichiesto=0;
+      totaleScansionato=0;
     });
     var payload = jsonEncode({"nomeConsegna": lastBarcode});
     var url = Uri.parse("${Globals.globalAPI}/api/sscc/consegna/verifica");
@@ -210,6 +217,10 @@ class MyHomeState extends State<Barcodex> with SingleTickerProviderStateMixin {
         // prodottiDaScansionare
         final prodottiDaScansionare =
             responseData['consegna']['prodottiDaScansionare'];
+for (var item in prodottiDaScansionare) {
+  totaleScansionato += (item['quantitaScansionata'] ?? 0).toDouble();
+  totaleRichiesto += (item['quantitaRichiesta'] ?? 0).toDouble();
+}
 
         if (prodottiDaScansionare != null &&
             prodottiDaScansionare is List &&
@@ -258,6 +269,8 @@ class MyHomeState extends State<Barcodex> with SingleTickerProviderStateMixin {
   Future<void> azioneAssocia() async {
     setState(() {
       _isLoading = true;
+      totaleRichiesto=0;
+      totaleScansionato=0;
     });
 
     var payload = jsonEncode({
@@ -294,11 +307,16 @@ class MyHomeState extends State<Barcodex> with SingleTickerProviderStateMixin {
           return;
         }
         final prodottiDaScansionare = responseData['prodottiDaScansionare'];
+          for (var item in prodottiDaScansionare) {
+  totaleScansionato += (item['quantitaScansionata'] ?? 0).toDouble();
+  totaleRichiesto += (item['quantitaRichiesta'] ?? 0).toDouble();
+}
 
         if (prodottiDaScansionare != null &&
             prodottiDaScansionare is List &&
             prodottiDaScansionare.isNotEmpty) {
           _eltabella2 = List<Map<String, dynamic>>.from(prodottiDaScansionare);
+
         } else {
           _eltabella2 = []; // 👈 array vuoto
         }
@@ -490,9 +508,25 @@ class MyHomeState extends State<Barcodex> with SingleTickerProviderStateMixin {
         await azioneAssocia();
       } else if (validazione) {
         await azioneValida();
+      }else if(completata){
+          hideLoadingDialog(context);
+      await player.play(AssetSource('sounds/error.mp3'));
+       mt.MotionToast.warning(
+        title: Text(
+          "ATTENZIONE!",
+          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+        ),
+        description: Text(
+          "PACKING COMPLETATO!",
+          style: TextStyle(fontSize: 16),
+        ),
+        width: 250,
+        height: 100,
+        toastDuration: Duration(seconds: 5),
+        animationType: mt.AnimationType.slideInFromLeft, // ← usa il prefisso
+      ).show(context);
       }
     }
-
     //  hideLoadingDialog(context);
   }
 
@@ -708,8 +742,18 @@ class MyHomeState extends State<Barcodex> with SingleTickerProviderStateMixin {
                                 ],
                               ),
                             ),
-                            SizedBox(height: 10),
-                            if (_eltabella1 != null &&
+                            SizedBox(height: 5),
+                             if (lastBarcode!= null) ...[
+                              Center(
+                                child: Text(
+  "PALLET: ${totaleScansionato.toInt()}/${totaleRichiesto.toInt()}",
+    style: GoogleFonts.lato(
+      fontSize: 20,
+      fontWeight: FontWeight.bold,
+    ),
+  ),
+                              ),
+                            if (completata && _eltabella1 != null &&
                                 _eltabella1.isNotEmpty) ...[
                               Text(
                                 'Panoramica',
@@ -781,6 +825,7 @@ class MyHomeState extends State<Barcodex> with SingleTickerProviderStateMixin {
                                   ),
                                 ),
                               ),
+                               ],
                               // SECONDA TAB
                               if (_eltabella2 != null &&
                                   _eltabella2.isNotEmpty) ...[
@@ -821,7 +866,7 @@ class MyHomeState extends State<Barcodex> with SingleTickerProviderStateMixin {
                                         ),
                                         DataColumn(
                                           label: Text(
-                                            'Richiesta',
+                                            'Totale',
                                             style: TextStyle(
                                               fontWeight: FontWeight.bold,
                                             ),
@@ -963,7 +1008,8 @@ class MyHomeState extends State<Barcodex> with SingleTickerProviderStateMixin {
                                   ),
                                 ),
                               ],
-                            ] else ...[
+                            
+                            ]else ...[
                               Padding(
                                   padding: EdgeInsets.only(top: 10, bottom: 10),
                                   child: Divider(
@@ -1055,17 +1101,17 @@ class MyHomeState extends State<Barcodex> with SingleTickerProviderStateMixin {
             ),
           ),
         ),
-        floatingActionButton: FloatingActionButton(
-          child: Icon(Icons.camera_enhance),
-          backgroundColor: Color(0xFF243364), //
-          onPressed: () {
-            setState(() {
-              _toggleScanner();
-              // camState = false; // Disabilita la camera
-              // qr = null;
-            });
-          },
-        ),
+        // floatingActionButton: FloatingActionButton(
+        //   child: Icon(Icons.camera_enhance),
+        //   backgroundColor: Color(0xFF243364), //
+        //   onPressed: () {
+        //     setState(() {
+        //       _toggleScanner();
+        //       // camState = false; // Disabilita la camera
+        //       // qr = null;
+        //     });
+        //   },
+        // ),
       ),
     );
   }
