@@ -32,8 +32,8 @@ class MyHomeState extends State<Barcodex> with SingleTickerProviderStateMixin {
   bool validazione = false;
   bool _isLoading = false;
   bool _isDialogOpen = false;
-  bool _isDialogOpenOrdine = false;
-  bool _isDialogOpenSS = false;
+   bool _isDialogOpenOrdine = false;
+      bool _isDialogOpenSS= false;
   bool _isErrore = false;
   String? selectedId;
   bool? presenzaLinea;
@@ -232,10 +232,10 @@ class MyHomeState extends State<Barcodex> with SingleTickerProviderStateMixin {
       var responseData = jsonDecode(response.body);
       hideLoadingDialog(context);
       if (responseData['successo'] == true) {
-        if (_isDialogOpenOrdine) {
-          Navigator.of(context).pop(); // chiude il dialog
-          _isDialogOpenOrdine = false; // resetta lo stato
-        }
+          if (_isDialogOpenOrdine) {
+    Navigator.of(context).pop(); // chiude il dialog
+    _isDialogOpenOrdine = false;        // resetta lo stato
+  }
         if (responseData['consegna']['statoWms'] == 'Completata') {
           setState(() {
             completata = true;
@@ -341,10 +341,10 @@ class MyHomeState extends State<Barcodex> with SingleTickerProviderStateMixin {
       var responseData = jsonDecode(response.body);
       hideLoadingDialog(context);
       if (responseData['successo'] == true) {
-        if (_isDialogOpenSS) {
-          Navigator.of(context).pop(); // chiude il dialog
-          _isDialogOpenSS = false; // resetta lo stato
-        }
+         if (_isDialogOpenSS) {
+    Navigator.of(context).pop(); // chiude il dialog
+    _isDialogOpenSS = false;        // resetta lo stato
+  }
         setState(() {
           totaleRichiesto = 0;
           totaleScansionato = 0;
@@ -555,7 +555,7 @@ class MyHomeState extends State<Barcodex> with SingleTickerProviderStateMixin {
       } else if (completata) {
         hideLoadingDialog(context);
         await player.play(AssetSource('sounds/error.mp3'));
-        mt.MotionToast.success(
+        mt.MotionToast.warning(
           title: Text(
             "ATTENZIONE!",
             style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
@@ -604,41 +604,21 @@ class MyHomeState extends State<Barcodex> with SingleTickerProviderStateMixin {
   }
 
   // CODICE A BARRA
-void _processBarcode(String value) {
-  if (_isErrore) return;
-  // Caso validazione prima del setState
-  if (!value.startsWith("WH") && validazione) {
-      player.play(AssetSource('sounds/error.mp3'));
-    _barcodeBuffer = "";
-    mt.MotionToast.warning(
-      title: Text(
-        "ATTENZIONE!",
-        style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-      ),
-      description: Text(
-        "NON PUOI VALIDARE",
-        style: TextStyle(fontSize: 16),
-      ),
-      width: 250,
-      height: 100,
-      toastDuration: Duration(seconds: 5),
-      animationType: mt.AnimationType.slideInFromLeft,
-    ).show(context);
-    return; // ✅ Ora esce da tutta la funzione
+  void _processBarcode(String value) {
+    if (_isErrore) return;
+
+    setState(() {
+      if (value.startsWith("WH")) {
+        lastBarcode = value;
+        barcodeSscc = null;
+      } else {
+        barcodeSscc = value;
+      }
+      _barcodeBuffer = "";
+    });
+
+    showLoadingDialog(context, value);
   }
-
-  setState(() {
-    if (value.startsWith("WH")) {
-      lastBarcode = value;
-      barcodeSscc = null;
-    } else {
-      barcodeSscc = value;
-    }
-    _barcodeBuffer = "";
-  });
-
-  showLoadingDialog(context, value);
-}
 
   // CAMERA
   // void _handleBarcode(BarcodeCapture barcodes) {
@@ -726,7 +706,7 @@ void _processBarcode(String value) {
                         .tint(duration: 1200.ms, color: Colors.white)
                   : validazione
                   ? Text(
-                          "SCANSIONE COMPLETATA", // se null mostra stringa vuota
+                          "IN VALIDAZIONE", // se null mostra stringa vuota
                           style: TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.bold,
@@ -748,7 +728,7 @@ void _processBarcode(String value) {
                 : associazione
                 ? Colors.yellow
                 : validazione
-                ? Color.fromARGB(255, 146, 113, 51)
+                ? Color(0xFF243364)
                 : Theme.of(context).primaryColor.withAlpha(180),
           ),
         ),
@@ -801,73 +781,50 @@ void _processBarcode(String value) {
                                           "N°Ordine: ${lastBarcode ?? ''}",
                                           style: TextStyle(
                                             fontWeight: FontWeight.bold,
-                                             fontSize: 16
                                           ),
                                         ),
                                         backgroundColor: Colors.blue.shade100,
-                                        onPressed: () async {
-                                          showDialog<String>(
-                                            context: context,
-                                            barrierDismissible: false,
-                                            builder: (context) {
-                                              String tempValue =
-                                                  (lastBarcode == null ||
-                                                      lastBarcode!.isEmpty)
-                                                  ? 'WH/OUT/'
-                                                  : lastBarcode!;
-                                              return AlertDialog(
-                                                // title: Text("N°Ordine"),
-                                                content: TextField(
-                                                  textCapitalization:
-                                                      TextCapitalization
-                                                          .characters,
-                                                  autofocus: true,
-                                                  decoration: InputDecoration(
-                                                    hintText:
-                                                        "Inserisci nuovo valore",
-                                                  ),
-                                                  controller:
-                                                      TextEditingController(
-                                                        text: tempValue,
-                                                      ),
-                                                  onChanged: (val) {
-                                                    tempValue = val
-                                                        .toUpperCase();
-                                                  },
-                                                ),
-                                                actions: [
-                                                  TextButton(
-                                                    onPressed: () {
-                                                      setState(() {
-                                                       
-                                                        _isDialogOpenOrdine =
-                                                            false;
-                                                      });
-                                                      Navigator.of(
-                                                        context,
-                                                      ).pop(); // chiude senza salvare
-                                                    },
-                                                    child: Text("ANNULLA"),
-                                                  ),
-                                                  ElevatedButton(
-                                                    onPressed: () {
-                                                      setState(() {
-                                                         lastBarcode = (tempValue.isEmpty) ? 'WH/OUT/' : tempValue;
-                                                        _isDialogOpenOrdine =
-                                                            true;
-                                                      });
-                                                      showLoadingDialog(
-                                                        context,
-                                                        lastBarcode!,
-                                                      );
-                                                    },
-                                                    child: Text("INVIA"),
-                                                  ),
-                                                ],
-                                              );
-                                            },
-                                          );
-                                        },
+                                       onPressed: () async {
+         showDialog<String>(
+          context: context,
+          builder: (context) {
+        String tempValue = (lastBarcode == null || lastBarcode!.isEmpty) ? 'WH/OUT/' : lastBarcode!;
+            return AlertDialog(
+              // title: Text("N°Ordine"),
+              content: TextField(
+                textCapitalization: TextCapitalization.characters,
+                autofocus: true,
+                decoration: InputDecoration(
+                  hintText: "Inserisci nuovo valore",
+                ),
+                controller: TextEditingController(text: tempValue),
+                onChanged: (val) {
+                  tempValue = val.toUpperCase();
+                },
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(context).pop(); // chiude senza salvare
+                  },
+                  child: Text("ANNULLA"),
+                ),
+                ElevatedButton(
+                  onPressed: () {
+                    setState(() {
+                      lastBarcode=tempValue;
+                      _isDialogOpenOrdine=true;
+                    });
+                showLoadingDialog(context, lastBarcode!);
+                 
+                  },
+                  child: Text("INVIA"),
+                ),
+              ],
+            );
+          }
+        );
+                                       }
                                       ),
 
                                       SizedBox(width: 8),
@@ -878,71 +835,50 @@ void _processBarcode(String value) {
                                           "SSCC: ${barcodeSscc ?? ''}",
                                           style: TextStyle(
                                             fontWeight: FontWeight.bold,
-                                            fontSize: 16
                                           ),
                                         ),
                                         backgroundColor: Colors.green.shade100,
-                                        onPressed: () async {
-                                          showDialog<String>(
-                                            context: context,
-                                            barrierDismissible: false,
-                                            builder: (context) {
-                                              String tempValue2 =
-                                                  barcodeSscc ?? '';
-                                              return AlertDialog(
-                                                // title: Text("N°Ordine"),
-                                                content: TextField(
-                                                  textCapitalization:
-                                                      TextCapitalization
-                                                          .characters,
-                                                  autofocus: true,
-                                                  decoration: InputDecoration(
-                                                    hintText:
-                                                        "Inserisci nuovo valore",
-                                                  ),
-                                                  controller:
-                                                      TextEditingController(
-                                                        text: tempValue2,
-                                                      ),
-                                                  onChanged: (val) {
-                                                    tempValue2 = val
-                                                        .toUpperCase();
-                                                  },
-                                                ),
-                                                
-                                                actions: [
-                                                  TextButton(
-                                                    onPressed: () {
-                                                        setState(() {
-                                                       
-                                                        _isDialogOpenSS =
-                                                            false;
-                                                      });
-                                                      Navigator.of(
-                                                        context,
-                                                      ).pop(); // chiude senza salvare
-                                                    },
-                                                    child: Text("ANNULLA"),
-                                                  ),
-                                                  ElevatedButton(
-                                                    onPressed: () {
-                                                      setState(() {
-                                                        barcodeSscc =
-                                                            tempValue2;
-                                                        _isDialogOpenSS = true;
-                                                      });
-                                                      showLoadingDialog(
-                                                        context,
-                                                        barcodeSscc!,
-                                                      );
-                                                    },
-                                                    child: Text("INVIA"),
-                                                  ),
-                                                ],
-                                              );
-                                            },
-                                          );
-                                        },
+                                         onPressed: () async {
+         showDialog<String>(
+          context: context,
+          builder: (context) {
+        String tempValue2 = barcodeSscc ?? '';
+            return AlertDialog(
+              // title: Text("N°Ordine"),
+              content: TextField(
+                textCapitalization: TextCapitalization.characters,
+                autofocus: true,
+                decoration: InputDecoration(
+                  hintText: "Inserisci nuovo valore",
+                ),
+                controller: TextEditingController(text: tempValue2),
+                onChanged: (val) {
+                  tempValue2 = val.toUpperCase();
+                },
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(context).pop(); // chiude senza salvare
+                  },
+                  child: Text("ANNULLA"),
+                ),
+                ElevatedButton(
+                  onPressed: () {
+                    setState(() {
+                      barcodeSscc=tempValue2;
+                      _isDialogOpenSS=true;
+                    });
+                showLoadingDialog(context, barcodeSscc!);
+                 
+                  },
+                  child: Text("INVIA"),
+                ),
+              ],
+            );
+          }
+        );
+                                       }
                                       ),
                                     ],
                                   ),
@@ -951,9 +887,6 @@ void _processBarcode(String value) {
                             ),
                             SizedBox(height: 5),
                             if (lastBarcode != null) ...[
-                              validazione
-    ? SizedBox.shrink() // se validazione è true, non mostra nulla
-    : 
                               Center(
                                 child: Text(
                                   "PALLET: ${totaleResiduo.toInt()}/${totaleRichiesto.toInt()}",
@@ -1189,7 +1122,9 @@ void _processBarcode(String value) {
                                 ),
                               ],
 
-                              if (validazione) ...[
+                              if (validazione &&
+                                  _eltabella3 != null &&
+                                  _eltabella3.isNotEmpty) ...[
                                 Padding(
                                   padding: EdgeInsets.only(top: 10, bottom: 10),
                                   child: Divider(
@@ -1198,16 +1133,103 @@ void _processBarcode(String value) {
                                     height: 15,
                                   ),
                                 ),
-                             Padding(
-                               padding: const EdgeInsets.only(left:10,right: 10),
-                               child: Text(
-                                 'QUESTA CONSEGNA è ORA IN FASE DI CONTROLLO. CAMBIA ORDINE DI CONSEGNA'.toUpperCase(),
-                                 style: TextStyle(
-                                   fontSize: 20,
-                                   fontWeight: FontWeight.bold, // grassetto
-                                 ),
-                               ),
-                             ),                              
+                                Text(
+                                  'Da Validare',
+                                  style: TextStyle(
+                                    fontStyle: FontStyle.italic,
+                                    fontSize: 16,
+                                  ),
+                                ),
+                                SingleChildScrollView(
+                                  physics: BouncingScrollPhysics(),
+                                  scrollDirection: Axis.horizontal,
+                                  child: DataTable(
+                                    horizontalMargin: 12,
+                                    headingRowColor: WidgetStateProperty.all(
+                                      Color.fromARGB(255, 233, 230, 221),
+                                    ),
+                                    dataRowMaxHeight: 50,
+                                    columnSpacing: 10,
+                                    columns: const <DataColumn>[
+                                      DataColumn(
+                                        label: Text(
+                                          'Prodotto',
+                                          style: TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                      ),
+                                      DataColumn(
+                                        label: Text(
+                                          'Da Controllare',
+                                          style: TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                      ),
+                                      DataColumn(
+                                        label: Text(
+                                          'UoM',
+                                          style: TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                    rows: _eltabella3.map((item) {
+                                      return DataRow(
+                                        cells: <DataCell>[
+                                          DataCell(
+                                            SizedBox(
+                                              width: 140,
+                                              child: Text(
+                                                item['prodotto'].toString(),
+                                                overflow: TextOverflow.ellipsis,
+                                              ),
+                                            ),
+                                            onTap: () {
+                                              showDialog(
+                                                context: context,
+                                                builder: (context) =>
+                                                    AlertDialog(
+                                                      title: Text("Prodotto"),
+                                                      content: Text(
+                                                        item['prodotto']
+                                                            .toString(),
+                                                      ),
+                                                      actions: [
+                                                        TextButton(
+                                                          onPressed: () =>
+                                                              Navigator.pop(
+                                                                context,
+                                                              ),
+                                                          child: Text("Chiudi"),
+                                                        ),
+                                                      ],
+                                                    ),
+                                              );
+                                            },
+                                          ),
+                                          DataCell(
+                                            Center(
+                                              child: Text(
+                                                item['quantitaDaControllare']
+                                                    .toString(),
+                                              ),
+                                            ),
+                                          ),
+                                          DataCell(
+                                            Center(
+                                              child: Text(
+                                                item['unitaMisura'].toString(),
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      );
+                                    }).toList(),
+                                  ),
+                                ),
                               ],
                             ] else ...[
                               Padding(

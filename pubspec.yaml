@@ -30,6 +30,7 @@ dependencies:
   audioplayers: ^6.5.1
   flutter_animate: ^4.5.2
   flutter_launcher_icons: ^0.14.4
+  popover: ^0.4.0
 
   
 
